@@ -1,0 +1,9 @@
+{
+    "age" : {
+        "number" : 1989,
+        "countries" : ["URSS","EEUU"],
+        "president" : {
+            "main": "Felipe"
+        }
+    }
+}

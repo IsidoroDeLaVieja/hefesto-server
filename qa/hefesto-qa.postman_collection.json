@@ -1,0 +1,1012 @@
+{
+	"info": {
+		"_postman_id": "95dd7adf-b5dd-4a4f-9b39-4d4cf518ca92",
+		"name": "hefesto-qa",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "admin-host-404",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"admin host return 404 without key\", function () {",
+							"  pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "incorrect-key",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "admin-host-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"admin host return 400 with key\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deploy-404",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"deploy return 400 without key\", function () {",
+							"  pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "incorrect-key",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/home/isidoro/repos/dlv-code-engine/qa/test-incorrect.tar.gz"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deploy-400",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"deploy return 400 with incorrect key api\", function () {",
+							"  pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "test-incorrect.tar.gz"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deploy-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"release\", jsonData.release);",
+							"",
+							"pm.test(\"deploy return 200 with correct api\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "hefesto-test.tar.gz"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deploy-analysis-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"deploy return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "analysis.tar.gz"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deploy-jobs-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"deploy return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "jobs.tar.gz"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put-api-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"put api return 204 with correct release\", function () {",
+							"  pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"active\" : true,\n    \"release\" : \"{{release}}\",\n    \"public\" : false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api/hefesto-test",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api",
+						"hefesto-test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api-private-404-public",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"api private return 404 with public\", function () {",
+							"  pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{public-host}}/hefesto-test/ping",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api-private-200-admin",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"api private return 200 with admin\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto-test/ping",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put-api-404",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"put api return 404 with incorrect release\", function () {",
+							"  pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"active\" : true,\n    \"release\" : \"incorrect-release\",\n    \"public\" : true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api/hefesto-test",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api",
+						"hefesto-test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put-api-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"put api return 204 with correct release\", function () {",
+							"  pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"active\" : true,\n    \"release\" : \"{{release}}\",\n    \"public\" : true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api/hefesto-test",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api",
+						"hefesto-test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api-public-200-public",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"api public return 200 with public\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{public-host}}/hefesto-test/ping",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api-404",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"api return 404 if not exists\", function () {",
+							"  pm.response.to.have.status(404);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{public-host}}/not-exist/endpoint",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"not-exist",
+						"endpoint"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logs-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"log return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"log has correct path\", () => {",
+							"    const responseJson = pm.response.json();",
+							"    pm.expect(responseJson[0].path).to.eql('/ping');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{method}}{{host}}/analysis/hefesto-test/tail",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"analysis",
+						"hefesto-test",
+						"tail"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "local-call-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"local call return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{public-host}}/hefesto-test/middleware/ping",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"middleware",
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cookie-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"cookie return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"cookie set\", function () {",
+							"  pm.response.to.have.header(\"Set-Cookie\");",
+							"  pm.response.to.be.header(\"Set-Cookie\",\"myname=myvalue; path=/; domain=hefesto_nginx_1\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{public-host}}/hefesto-test/middleware/pingandcookie",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"middleware",
+						"pingandcookie"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "global-vars-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"globalvars return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"response is correct\", function () {",
+							"    var jsonData = JSON.parse(responseBody);",
+							"    pm.expect(jsonData.org).to.eql(postman.getEnvironmentVariable(\"public-host\"));",
+							"    pm.expect(jsonData.api).to.eql(\"hefesto-test\");",
+							"    pm.expect(jsonData.localhost).to.eql(\"http://hefesto_nginx_1\");",
+							"    pm.expect(jsonData.pathcode).to.eql(\"/var/www/app/Apis/\"+postman.getEnvironmentVariable(\"release\")+\"/\");",
+							"    pm.expect(jsonData.definitionpath).to.eql(\"/globalvars\");",
+							"    pm.expect(jsonData.definitionverb).to.eql(\"GET\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{method}}{{public-host}}/hefesto-test/globalvars",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"globalvars"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "to-queue-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"id-job\", jsonData.id);",
+							"",
+							"pm.test(\"to queue return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{method}}{{public-host}}/hefesto-test/job/body",
+					"host": [
+						"{{method}}{{public-host}}"
+					],
+					"path": [
+						"hefesto-test",
+						"job",
+						"body"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put-api-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"put api return 204 with correct release\", function () {",
+							"  pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"active\" : false,\n    \"release\" : \"{{release}}\",\n    \"public\" : false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{method}}{{host}}/hefesto/api/hefesto-test",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"hefesto",
+						"api",
+						"hefesto-test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "worker-200",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"worker return 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"worker is working\", function () {",
+							"    pm.expect(pm.response.text()).to.eql(\"test\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.log(\"wait, please\");",
+							"setTimeout(function(){}, 30000);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "public-host",
+						"value": "{{public-host}}",
+						"type": "text"
+					},
+					{
+						"key": "public-host-key",
+						"value": "{{public-host-key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{method}}{{host}}/jobs/status/{{id-job}}",
+					"host": [
+						"{{method}}{{host}}"
+					],
+					"path": [
+						"jobs",
+						"status",
+						"{{id-job}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,412 @@
+version: '3'
+
+networks:
+  backend:
+    driver: ${NETWORKS_DRIVER}
+
+volumes:
+  postgres:
+    driver: ${VOLUMES_DRIVER}
+  redis:
+    driver: ${VOLUMES_DRIVER}
+
+services:
+
+### PHP-FPM ##############################################
+    php-fpm:
+      build:
+        context: ./php-fpm
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE}
+          - BASE_IMAGE_TAG_PREFIX=${PHP_FPM_BASE_IMAGE_TAG_PREFIX}
+          - LARADOCK_PHP_VERSION=${PHP_VERSION}
+          - LARADOCK_PHALCON_VERSION=${PHALCON_VERSION}
+          - INSTALL_BZ2=${PHP_FPM_INSTALL_BZ2}
+          - INSTALL_GMP=${PHP_FPM_INSTALL_GMP}
+          - INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+          - INSTALL_PCOV=${PHP_FPM_INSTALL_PCOV}
+          - INSTALL_PHPDBG=${PHP_FPM_INSTALL_PHPDBG}
+          - INSTALL_BLACKFIRE=${INSTALL_BLACKFIRE}
+          - INSTALL_SSH2=${PHP_FPM_INSTALL_SSH2}
+          - INSTALL_SOAP=${PHP_FPM_INSTALL_SOAP}
+          - INSTALL_XSL=${PHP_FPM_INSTALL_XSL}
+          - INSTALL_SMB=${PHP_FPM_INSTALL_SMB}
+          - INSTALL_IMAP=${PHP_FPM_INSTALL_IMAP}
+          - INSTALL_MONGO=${PHP_FPM_INSTALL_MONGO}
+          - INSTALL_AMQP=${PHP_FPM_INSTALL_AMQP}
+          - INSTALL_CASSANDRA=${PHP_FPM_INSTALL_CASSANDRA}
+          - INSTALL_GEARMAN=${PHP_FPM_INSTALL_GEARMAN}
+          - INSTALL_MSSQL=${PHP_FPM_INSTALL_MSSQL}
+          - INSTALL_BCMATH=${PHP_FPM_INSTALL_BCMATH}
+          - INSTALL_PHPREDIS=${PHP_FPM_INSTALL_PHPREDIS}
+          - INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+          - INSTALL_OPCACHE=${PHP_FPM_INSTALL_OPCACHE}
+          - INSTALL_EXIF=${PHP_FPM_INSTALL_EXIF}
+          - INSTALL_AEROSPIKE=${PHP_FPM_INSTALL_AEROSPIKE}
+          - INSTALL_OCI8=${PHP_FPM_INSTALL_OCI8}
+          - INSTALL_MYSQLI=${PHP_FPM_INSTALL_MYSQLI}
+          - INSTALL_PGSQL=${PHP_FPM_INSTALL_PGSQL}
+          - INSTALL_PG_CLIENT=${PHP_FPM_INSTALL_PG_CLIENT}
+          - INSTALL_POSTGIS=${PHP_FPM_INSTALL_POSTGIS}
+          - INSTALL_INTL=${PHP_FPM_INSTALL_INTL}
+          - INSTALL_GHOSTSCRIPT=${PHP_FPM_INSTALL_GHOSTSCRIPT}
+          - INSTALL_LDAP=${PHP_FPM_INSTALL_LDAP}
+          - INSTALL_PHALCON=${PHP_FPM_INSTALL_PHALCON}
+          - INSTALL_SWOOLE=${PHP_FPM_INSTALL_SWOOLE}
+          - INSTALL_TAINT=${PHP_FPM_INSTALL_TAINT}
+          - INSTALL_IMAGE_OPTIMIZERS=${PHP_FPM_INSTALL_IMAGE_OPTIMIZERS}
+          - INSTALL_IMAGEMAGICK=${PHP_FPM_INSTALL_IMAGEMAGICK}
+          - INSTALL_CALENDAR=${PHP_FPM_INSTALL_CALENDAR}
+          - INSTALL_FAKETIME=${PHP_FPM_INSTALL_FAKETIME}
+          - INSTALL_IONCUBE=${PHP_FPM_INSTALL_IONCUBE}
+          - INSTALL_APCU=${PHP_FPM_INSTALL_APCU}
+          - INSTALL_CACHETOOL=${PHP_FPM_INSTALL_CACHETOOL}
+          - INSTALL_YAML=${PHP_FPM_INSTALL_YAML}
+          - INSTALL_RDKAFKA=${PHP_FPM_INSTALL_RDKAFKA}
+          - INSTALL_GETTEXT=${PHP_FPM_INSTALL_GETTEXT}
+          - INSTALL_ADDITIONAL_LOCALES=${PHP_FPM_INSTALL_ADDITIONAL_LOCALES}
+          - INSTALL_MYSQL_CLIENT=${PHP_FPM_INSTALL_MYSQL_CLIENT}
+          - INSTALL_PING=${PHP_FPM_INSTALL_PING}
+          - INSTALL_SSHPASS=${PHP_FPM_INSTALL_SSHPASS}
+          - INSTALL_MAILPARSE=${PHP_FPM_INSTALL_MAILPARSE}
+          - INSTALL_PCNTL=${PHP_FPM_INSTALL_PCNTL}
+          - ADDITIONAL_LOCALES=${PHP_FPM_ADDITIONAL_LOCALES}
+          - INSTALL_FFMPEG=${PHP_FPM_FFMPEG}
+          - INSTALL_WKHTMLTOPDF=${PHP_FPM_INSTALL_WKHTMLTOPDF}
+          - INSTALL_XHPROF=${PHP_FPM_INSTALL_XHPROF}
+          - INSTALL_XMLRPC=${PHP_FPM_INSTALL_XMLRPC}
+          - PUID=${PHP_FPM_PUID}
+          - PGID=${PHP_FPM_PGID}
+          - LOCALE=${PHP_FPM_DEFAULT_LOCALE}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      volumes:
+        - ./php-fpm/php${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+      expose:
+        - "9000"
+      extra_hosts:
+        - "dockerhost:${DOCKER_HOST_IP}"
+      environment:
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - DOCKER_TLS_VERIFY=1
+        - DOCKER_TLS_CERTDIR=/certs
+        - DOCKER_CERT_PATH=/certs/client
+        - FAKETIME=${PHP_FPM_FAKETIME}
+      networks:
+        - backend
+
+### PHP Worker ############################################
+    php-worker:
+      build:
+        context: ./php-worker
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE}
+          - LARADOCK_PHP_VERSION=${PHP_VERSION}
+          - PHALCON_VERSION=${PHALCON_VERSION}
+          - INSTALL_BZ2=${PHP_WORKER_INSTALL_BZ2}
+          - INSTALL_GD=${PHP_WORKER_INSTALL_GD}
+          - INSTALL_IMAGEMAGICK=${PHP_WORKER_INSTALL_IMAGEMAGICK}
+          - INSTALL_GMP=${PHP_WORKER_INSTALL_GMP}
+          - INSTALL_PGSQL=${PHP_WORKER_INSTALL_PGSQL}
+          - INSTALL_BCMATH=${PHP_WORKER_INSTALL_BCMATH}
+          - INSTALL_OCI8=${PHP_WORKER_INSTALL_OCI8}
+          - INSTALL_PHALCON=${PHP_WORKER_INSTALL_PHALCON}
+          - INSTALL_SOAP=${PHP_WORKER_INSTALL_SOAP}
+          - INSTALL_ZIP_ARCHIVE=${PHP_WORKER_INSTALL_ZIP_ARCHIVE}
+          - INSTALL_MYSQL_CLIENT=${PHP_WORKER_INSTALL_MYSQL_CLIENT}
+          - INSTALL_AMQP=${PHP_WORKER_INSTALL_AMQP}
+          - INSTALL_CASSANDRA=${PHP_WORKER_INSTALL_CASSANDRA}
+          - INSTALL_GEARMAN=${PHP_WORKER_INSTALL_GEARMAN}
+          - INSTALL_GHOSTSCRIPT=${PHP_WORKER_INSTALL_GHOSTSCRIPT}
+          - INSTALL_SWOOLE=${PHP_WORKER_INSTALL_SWOOLE}
+          - INSTALL_TAINT=${PHP_WORKER_INSTALL_TAINT}
+          - INSTALL_FFMPEG=${PHP_WORKER_INSTALL_FFMPEG}
+          - INSTALL_REDIS=${PHP_WORKER_INSTALL_REDIS}
+          - INSTALL_IMAP=${PHP_WORKER_INSTALL_IMAP}
+          - INSTALL_XMLRPC=${PHP_WORKER_INSTALL_XMLRPC}
+          - PUID=${PHP_WORKER_PUID}
+          - PGID=${PHP_WORKER_PGID}
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ./php-worker/supervisord.d:/etc/supervisord.d
+      extra_hosts:
+        - "dockerhost:${DOCKER_HOST_IP}"
+      networks:
+        - backend
+
+### NGINX Server #########################################
+    nginx:
+      build:
+        context: ./nginx
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE}
+          - PHP_UPSTREAM_CONTAINER=${NGINX_PHP_UPSTREAM_CONTAINER}
+          - PHP_UPSTREAM_PORT=${NGINX_PHP_UPSTREAM_PORT}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ${NGINX_SITES_PATH}:/etc/nginx/sites-available
+        - ${NGINX_LETSENCRYPT_PATH}:/etc/letsencrypt
+        - ${NGINX_SSL_PATH}:/etc/nginx/ssl
+      ports:
+        - "${NGINX_HOST_HTTP_PORT}:80"
+        - "${NGINX_HOST_HTTPS_PORT}:443"
+      depends_on:
+        - php-fpm
+      networks:
+        - backend
+
+### Blackfire ########################################
+    blackfire:
+      image: blackfire/blackfire
+      environment:
+        - BLACKFIRE_SERVER_ID=${BLACKFIRE_SERVER_ID}
+        - BLACKFIRE_SERVER_TOKEN=${BLACKFIRE_SERVER_TOKEN}
+      depends_on:
+        - php-fpm
+      networks:
+        - backend
+        
+### PostgreSQL ###################################
+    postgres:
+      build: ./postgres-pgrouting
+      volumes:
+        - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
+      ports:
+        - "${POSTGRES_PORT}:5432"
+      environment:
+        - POSTGRES_DB=${POSTGRES_DB}
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      networks:
+        - backend
+
+### Redis ################################################
+    redis:
+      build: ./redis
+      volumes:
+        - ${DATA_PATH_HOST}/redis:/data
+      ports:
+        - "${REDIS_PORT}:6379"
+      networks:
+        - backend
+
+### Redis Cluster ##########################################
+    redis-cluster:
+      build: ./redis-cluster
+      ports:
+        - "${REDIS_CLUSTER_PORT_RANGE}:7000-7005"
+      networks:
+        - backend
+
+### pgAdmin ##############################################
+    pgadmin:
+      image: dpage/pgadmin4:latest
+      environment:
+        - "PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}"
+        - "PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}"
+      ports:
+        - "${PGADMIN_PORT}:80"
+      volumes:
+        - ${DATA_PATH_HOST}/pgadmin:/var/lib/pgadmin
+      depends_on:
+        - postgres
+      networks:
+        - backend
+
+### NetData ################################################
+    netdata:
+      image: netdata/netdata:latest
+      cap_add:
+        - SYS_PTRACE
+      volumes:
+        - /proc:/host/proc:ro
+        - /sys:/host/sys:ro
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+      ports:
+        - "${NETDATA_PORT}:19999"
+      networks:
+        - backend
+
+### REDISWEBUI ################################################
+    redis-webui:
+      build:
+        context: ./redis-webui
+      environment:
+        - ADMIN_USER=${REDIS_WEBUI_USERNAME}
+        - ADMIN_PASS=${REDIS_WEBUI_PASSWORD}
+        - REDIS_1_HOST=${REDIS_WEBUI_CONNECT_HOST}
+        - REDIS_1_PORT=${REDIS_WEBUI_CONNECT_PORT}
+      networks:
+        - backend
+      ports:
+        - "${REDIS_WEBUI_PORT}:80"
+      depends_on:
+        - redis
+
+### MAILU ################################################
+    mailu:
+      image: mailu/admin:${MAILU_VERSION}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/data:/data"
+        - "${DATA_PATH_HOST}/mailu/dkim:/dkim"
+        - "${DATA_PATH_HOST}/mailu/webmail:/webmail"
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+      depends_on:
+        - mailu-front
+        - mailu-imap
+        - mailu-smtp
+        - mailu-antispam
+        - mailu-antivirus
+        - mailu-webdav
+        - mailu-admin
+        - mailu-webmail
+        - mailu-fetchmail
+      command: ["sh", "-c", "echo ${MAILU_INIT_ADMIN_USERNAME}@${MAILU_DOMAIN} ${MAILU_INIT_ADMIN_PASSWORD} ;python manage.py advertise ; python manage.py db upgrade ; python manage.py admin ${MAILU_INIT_ADMIN_USERNAME} ${MAILU_DOMAIN} ${MAILU_INIT_ADMIN_PASSWORD} || true;sed -i -- \"s/= Off/= On/g\" /webmail/_data_/_default_/configs/config.ini || true;if grep -Fq \"registration_link_url\" /webmail/_data_/_default_/configs/config.ini;then echo Already set!;else echo \"\" >> /webmail/_data_/_default_/configs/config.ini; echo \"[login]\" >> /webmail/_data_/_default_/configs/config.ini;echo \"registration_link_url = '${MAILU_WEBSITE}${MAILU_WEB_ADMIN}/ui/user/signup'\" >> /webmail/_data_/_default_/configs/config.ini;fi"]
+      networks:
+        - backend
+    mailu-front:
+      image: mailu/nginx:${MAILU_VERSION}
+      environment:
+        - ADMIN=${MAILU_ADMIN}
+        - WEB_ADMIN=${MAILU_WEB_ADMIN}
+        - WEB_WEBMAIL=${MAILU_WEB_WEBMAIL}
+        - WEBDAV=${MAILU_WEBDAV}
+        - HOSTNAMES=${MAILU_HOSTNAMES}
+        - TLS_FLAVOR=${MAILU_TLS_FLAVOR}
+        - MESSAGE_SIZE_LIMIT=${MAILU_MESSAGE_SIZE_LIMIT}
+      ports:
+        - "${MAILU_HTTP_PORT}:80"
+        - "${MAILU_HTTPS_PORT}:443"
+        - "110:110"
+        - "143:143"
+        - "993:993"
+        - "995:995"
+        - "25:25"
+        - "465:465"
+        - "587:587"
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/certs:/certs"
+      networks:
+        backend:
+          aliases:
+            - front
+    mailu-imap:
+      image: mailu/dovecot:${MAILU_VERSION}
+      environment:
+        - DOMAIN=${MAILU_DOMAIN}
+        - HOSTNAMES=${MAILU_HOSTNAMES}
+        - POSTMASTER=${MAILU_POSTMASTER}
+        - WEBMAIL=${MAILU_WEBMAIL}
+        - RECIPIENT_DELIMITER=${MAILU_RECIPIENT_DELIMITER}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/data:/data"
+        - "${DATA_PATH_HOST}/mailu/mail:/mail"
+        - "${DATA_PATH_HOST}/mailu/overrides:/overrides"
+      depends_on:
+        - mailu-front
+      networks:
+        backend:
+          aliases:
+            - imap
+    mailu-smtp:
+      image: mailu/postfix:${MAILU_VERSION}
+      environment:
+        - DOMAIN=${MAILU_DOMAIN}
+        - HOSTNAMES=${MAILU_HOSTNAMES}
+        - RELAYHOST=${MAILU_RELAYHOST}
+        - RELAYNETS=${MAILU_RELAYNETS}
+        - RECIPIENT_DELIMITER=${MAILU_RECIPIENT_DELIMITER}
+        - MESSAGE_SIZE_LIMIT=${MAILU_MESSAGE_SIZE_LIMIT}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/data:/data"
+        - "${DATA_PATH_HOST}/mailu/overrides:/overrides"
+      depends_on:
+        - mailu-front
+      networks:
+        backend:
+          aliases:
+            - smtp
+    mailu-antispam:
+      image: mailu/rspamd:${MAILU_VERSION}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/filter:/var/lib/rspamd"
+        - "${DATA_PATH_HOST}/mailu/dkim:/dkim"
+        - "${DATA_PATH_HOST}/mailu/overrides/rspamd:/etc/rspamd/override.d"
+      depends_on:
+        - mailu-front
+      networks:
+        backend:
+          aliases:
+            - antispam
+    mailu-antivirus:
+      image: mailu/clamav:${MAILU_VERSION}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/filter:/data"
+      networks:
+        backend:
+          aliases:
+            - antivirus
+    mailu-webdav:
+      image: mailu/${MAILU_WEBDAV}:${MAILU_VERSION}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/dav:/data"
+      networks:
+        backend:
+          aliases:
+            - webdav
+    mailu-admin:
+      image: mailu/admin:${MAILU_VERSION}
+      environment:
+        - DOMAIN=${MAILU_DOMAIN}
+        - HOSTNAMES=${MAILU_HOSTNAMES}
+        - POSTMASTER=${MAILU_POSTMASTER}
+        - SECRET_KEY=${MAILU_SECRET_KEY}
+        - AUTH_RATELIMIT=${MAILU_AUTH_RATELIMIT}
+        - TLS_FLAVOR=${MAILU_TLS_FLAVOR}
+        - DISABLE_STATISTICS=${MAILU_DISABLE_STATISTICS}
+        - DMARC_RUA=${MAILU_DMARC_RUA}
+        - DMARC_RUF=${MAILU_DMARC_RUF}
+        - WELCOME=${MAILU_WELCOME}
+        - WELCOME_SUBJECT=${MAILU_WELCOME_SUBJECT}
+        - WELCOME_BODY=${MAILU_WELCOME_BODY}
+        - WEB_ADMIN=${MAILU_WEB_ADMIN}
+        - WEB_WEBMAIL=${MAILU_WEB_WEBMAIL}
+        - WEBSITE=${MAILU_WEBSITE}
+        - WEBMAIL=${MAILU_WEBMAIL}
+        - SITENAME=${MAILU_SITENAME}
+        - PASSWORD_SCHEME=${MAILU_PASSWORD_SCHEME}
+        - RECAPTCHA_PUBLIC_KEY=${MAILU_RECAPTCHA_PUBLIC_KEY}
+        - RECAPTCHA_PRIVATE_KEY=${MAILU_RECAPTCHA_PRIVATE_KEY}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/data:/data"
+        - "${DATA_PATH_HOST}/mailu/dkim:/dkim"
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+      depends_on:
+        - redis
+      networks:
+        backend:
+          aliases:
+            - admin
+    mailu-webmail:
+      image: "mailu/${MAILU_WEBMAIL}:${MAILU_VERSION}"
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/webmail:/data"
+      networks:
+        backend:
+          aliases:
+            - webmail
+    mailu-fetchmail:
+      image: mailu/fetchmail:${MAILU_VERSION}
+      environment:
+        - FETCHMAIL_DELAY=${MAILU_FETCHMAIL_DELAY}
+      volumes:
+        - "${DATA_PATH_HOST}/mailu/data:/data"
+      networks:
+        backend:
+          aliases:
+            - fetchmail

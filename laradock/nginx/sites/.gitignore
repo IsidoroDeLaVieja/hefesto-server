@@ -1,0 +1,3 @@
+*.conf
+!localhost.conf
+!capture-trash.conf
