@@ -31,7 +31,12 @@ class MainController extends Controller
 
     public function execute(Request $request) 
     {
-        $path = $this->getPath($request->virtualHost['PATH'],$request->path());
+        $path = $this->getPath(
+            $request->virtualHost['TYPE'] === 'ADMIN'
+                ? ''
+                : $request->virtualHost['PATH']
+            ,$request->path()
+        );
         $apiCode = $this->getApi($request->api['release']);
         
         $pathInfo = $this->pathInterpreter->execute($request->method(),$path,$apiCode->actions());

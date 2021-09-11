@@ -12,6 +12,7 @@ use Exception;
 class CheckApi
 {
     private $apiStorage;
+    private $isAdmin;
 
     public function __construct(
         ApiStorage $apiStorage
@@ -24,11 +25,11 @@ class CheckApi
         Closure $next
     ) {
         try {
+            $this->isAdmin = $request->virtualHost['TYPE'] === 'ADMIN';
             $api = $this->getApi($request);
-            $isAdmin = $request->virtualHost['TYPE'] === 'ADMIN';
             if (        !$api 
                     ||  !$api['active']
-                    ||  (!$isAdmin && !$api['public'] ) 
+                    ||  (!$this->isAdmin && !$api['public'] ) 
             ) {
                 throw new Exception('Api not found');
             }
@@ -51,7 +52,7 @@ class CheckApi
 
     private function getKey(Request $request) : string 
     {
-        $path = $request->virtualHost['PATH'] 
+        $path = !$this->isAdmin && $request->virtualHost['PATH'] 
             ? $request->virtualHost['PATH'] 
             : '/'.$request->path();
         $segments = explode('/',$path);
