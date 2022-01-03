@@ -35,7 +35,7 @@ class MainController extends Controller
             $request->virtualHost['TYPE'] === 'ADMIN'
                 ? ''
                 : $request->virtualHost['PATH']
-            ,$request->path()
+            , parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)
         );
         $apiCode = $this->getApi($request->api['release']);
         
@@ -92,7 +92,7 @@ class MainController extends Controller
 
     private function getPath(string $virtualHostPath, string $requestPath) : string 
     {
-        $requestPath = $requestPath && $requestPath !== '/' ? '/'.$requestPath : '';
+        $requestPath = $requestPath && $requestPath !== '/' ? $requestPath : '';
         $pathWithKey = trim($virtualHostPath . $requestPath);
         $segments = explode('/',$pathWithKey);
         if (isset($segments[0])) {
