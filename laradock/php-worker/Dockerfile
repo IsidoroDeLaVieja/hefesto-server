@@ -44,9 +44,7 @@ RUN if [ $(php -r "echo PHP_MAJOR_VERSION;") = "5" ]; then \
 ;fi
 
 # Add a non-root user:
-ARG PUID=1000
 ENV PUID ${PUID}
-ARG PGID=1000
 ENV PGID ${PGID}
 
 RUN addgroup -g ${PGID} laradock && \

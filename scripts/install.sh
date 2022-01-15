@@ -11,6 +11,7 @@ DATA_PATH_HOST=$(echo $DATA_PATH_HOST | sed 's_/_\\/_g')
 cp $CODE_DIR/.env.example $CODE_DIR/.env
 cp $LARADOCK_DIR/env-example $LARADOCK_DIR/.env
 sed -i "s/#DATA_PATH_HOST#/$DATA_PATH_HOST/g" $LARADOCK_DIR/.env
+sed -i "s/#UID#/$UID/g" $LARADOCK_DIR/.env
 
 cd $LARADOCK_DIR
 docker-compose up -d nginx redis php-worker postgres
