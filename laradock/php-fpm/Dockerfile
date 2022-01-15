@@ -944,7 +944,9 @@ RUN apt-get clean && \
     rm /var/log/lastlog /var/log/faillog
 
 # Configure non-root user.
+ARG PUID=${PUID}
 ENV PUID ${PUID}
+ARG PGID=${PGID}
 ENV PGID ${PGID}
 
 RUN groupmod -o -g ${PGID} www-data && \
