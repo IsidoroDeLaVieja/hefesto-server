@@ -56,7 +56,8 @@ class CheckPublicHost
     private function isLocalCall(string $ip) : bool 
     {
         return $_SERVER['SERVER_NAME'] === 'localhost' && !filter_var(
-            $ip, 
+            $ip,
+            FILTER_VALIDATE_IP,
             FILTER_FLAG_NO_PRIV_RANGE
         );
     }
