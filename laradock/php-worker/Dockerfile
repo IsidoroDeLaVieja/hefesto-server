@@ -1,5 +1,7 @@
 FROM php:8.1-alpine
 
+RUN apk update && apk upgrade
+
 RUN apk --update add wget \
   curl \
   git \
