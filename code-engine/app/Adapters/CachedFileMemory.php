@@ -28,6 +28,9 @@ class CachedFileMemory implements Memory {
             $value = serialize(null);
         }
         Redis::set($key, $value);
+        if (is_null($value)) {
+            return null;
+        }
         return unserialize($value);
     }
 

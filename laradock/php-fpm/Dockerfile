@@ -34,7 +34,7 @@ RUN set -eux; \
     docker-php-ext-install gd; \
     php -r 'var_dump(gd_info());'
 
-RUN apt-get update && apt-get install -y git
+RUN apt-get update && apt-get install -y git zip unzip
 
 RUN printf "\n" | pecl install -o -f redis \
     &&  rm -rf /tmp/pear \
