@@ -10,5 +10,6 @@ SOURCE=$SCRIPT_DIR/..
 param_or_die "The format is virtualhost-delete.sh virtualhost" $VIRTUAL_HOST
 
 docker exec --user www-data hefesto_php-fpm_1 php /var/www/artisan delete:virtualhost $VIRTUAL_HOST
+docker exec hefesto_nginx_1 certbot delete --non-interactive --cert-name $VIRTUAL_HOST
 
 echo $VIRTUAL_HOST' DELETED'
