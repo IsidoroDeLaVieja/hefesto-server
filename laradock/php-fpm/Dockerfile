@@ -4,6 +4,9 @@ ENV DEBIAN_FRONTEND noninteractive
 
 WORKDIR /var/www
 
+COPY www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY php-fpm.conf /usr/local/etc/php-fpm.conf
+
 RUN set -eux; \
     apt-get update; \
     apt-get upgrade -y; \
