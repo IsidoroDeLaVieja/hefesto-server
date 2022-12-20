@@ -119,6 +119,22 @@ class PredisQueue implements Queue
         }
     }
 
+    public function count(string $org,string $env) : array
+    {
+        $this->setEnvironment(
+            $org,
+            $env
+        );
+
+        return [
+            'requests' => (int)$this->client->hget($this->environmentInfoHashKey(),'requests'),
+            'waiting' => $this->client->executeRaw(['sintercard',2,$this->environmentSetKey(),self::WAITING_SET]),
+            'processing' => $this->client->executeRaw(['sintercard',2,$this->environmentSetKey(),self::PROCESSING_SET]),
+            'failed' => $this->client->executeRaw(['sintercard',2,$this->environmentSetKey(),self::FAILED_SET]),
+            'success' => (int)$this->client->hget($this->environmentInfoHashKey(),'success')
+        ];
+    }
+
     private function setEnvironment(string $org, string $env) : void
     {
         $this->org = $this->onlyAlphaNumeric($org);

@@ -13,4 +13,6 @@ interface Queue
     public function fail(string $id) : void;
 
     public function success(string $id,string $org,string $env) : void;
+
+    public function count(string $org,string $env) : array; 
 }
