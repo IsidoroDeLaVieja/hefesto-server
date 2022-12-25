@@ -119,6 +119,26 @@ class PredisQueue implements Queue
         }
     }
 
+    public function requeueFailed(string $org,string $env) : int
+    {
+        $this->setEnvironment(
+            $org,
+            $env
+        );
+
+        $count = 0;
+        $score = $this->now();
+        $ids = $this->client->sinter($this->environmentSetKey(),self::FAILED_SET);
+        foreach($ids as $id) {
+            $this->client->transaction(function ($redis) use ($id,$score) {
+                $redis->smove(self::FAILED_SET,self::WAITING_SET, $id);
+                $redis->zadd(self::DELAYED_SORTED_SET, $score, $id);
+            });
+            $count++;
+        }
+        return $count;
+    }
+
     public function count(string $org,string $env) : array
     {
         $this->setEnvironment(

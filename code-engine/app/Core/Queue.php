@@ -14,5 +14,7 @@ interface Queue
 
     public function success(string $id,string $org,string $env) : void;
 
+    public function requeueFailed(string $org,string $env) : int;
+
     public function count(string $org,string $env) : array; 
 }
