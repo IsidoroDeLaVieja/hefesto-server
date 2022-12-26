@@ -126,7 +126,6 @@ class PredisQueue implements Queue
             $env
         );
 
-        $count = 0;
         $score = $this->now();
         $ids = $this->client->sinter($this->environmentSetKey(),self::FAILED_SET);
         foreach($ids as $id) {
@@ -134,9 +133,29 @@ class PredisQueue implements Queue
                 $redis->smove(self::FAILED_SET,self::WAITING_SET, $id);
                 $redis->zadd(self::DELAYED_SORTED_SET, $score, $id);
             });
-            $count++;
         }
-        return $count;
+        return count($ids);
+    }
+
+    public function flush(string $org,string $env) : int
+    {
+        $this->setEnvironment(
+            $org,
+            $env
+        );
+
+        $this->client->hdel($this->environmentInfoHashKey(),'requests');
+        $this->client->hdel($this->environmentInfoHashKey(),'success');
+
+        $ids = $this->client->sinter($this->environmentSetKey(),self::FAILED_SET);
+        foreach($ids as $id) {
+            $this->client->transaction(function ($redis) use ($id) {
+                $redis->srem($this->environmentSetKey(),$id);
+                $redis->srem(self::FAILED_SET,$id);
+                $redis->hdel(self::ENGINE_HASH,$id);
+            });
+        }
+        return count($ids);
     }
 
     public function count(string $org,string $env) : array
