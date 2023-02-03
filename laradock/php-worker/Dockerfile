@@ -17,7 +17,6 @@ RUN apk --update add wget \
   libgsasl-dev \
   oniguruma-dev \
   libressl \
-  libressl-dev \
   supervisor
 
 RUN docker-php-ext-install mysqli mbstring pdo pdo_mysql pdo_pgsql xml pcntl
