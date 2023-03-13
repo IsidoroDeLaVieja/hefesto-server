@@ -90,6 +90,7 @@ class Engine {
         if ($log) {
             $this->onFinish();
         }
+        $this->state->memory()->set('db-conn',null);
         return $this->state->message();
     }
 
