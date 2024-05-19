@@ -16,7 +16,7 @@ class ApiStorageTest extends TestCase
     protected function setUp() : void
     {
         $this->memory = $this->getMockBuilder(Memory::class)
-                ->setMethods([
+                ->onlyMethods([
                     'get',
                     'set',
                     'read'

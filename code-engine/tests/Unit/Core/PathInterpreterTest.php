@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Core;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use App\Core\PathInterpreter;
 
 class PathInterpreterTest extends TestCase
@@ -23,7 +24,7 @@ class PathInterpreterTest extends TestCase
         ];
     }
 
-    public function foundProvider()
+    public static function foundProvider()
     {
         return [
             [
@@ -41,7 +42,7 @@ class PathInterpreterTest extends TestCase
         ];
     }
 
-    public function notFoundProvider()
+    public static function notFoundProvider()
     {
         return [
             [
@@ -59,9 +60,7 @@ class PathInterpreterTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider foundProvider
-     */
+    #[DataProvider('foundProvider')]
     public function testPathFound(
         string $requestVerb,
         string $requestPath,
@@ -75,9 +74,7 @@ class PathInterpreterTest extends TestCase
         $this->assertSame($requestPathParams,$pathInfo['PATH_PARAMS']);
     }
 
-    /**
-     * @dataProvider notFoundProvider
-     */
+    #[DataProvider('notFoundProvider')]
     public function testPathNotFound(
         string $requestVerb,
         string $requestPath
@@ -86,9 +83,7 @@ class PathInterpreterTest extends TestCase
         $this->assertNull($pathInfo);
     }
 
-    /**
-     * @dataProvider notFoundProvider
-     */
+    #[DataProvider('notFoundProvider')]
     public function testMiddleware(
         string $requestVerb,
         string $requestPath

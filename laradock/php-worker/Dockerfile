@@ -1,4 +1,4 @@
-FROM php:8.1-alpine
+FROM php:8.3-alpine
 
 RUN apk update && apk upgrade
 

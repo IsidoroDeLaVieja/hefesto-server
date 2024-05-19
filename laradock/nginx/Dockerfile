@@ -28,9 +28,7 @@ RUN echo "upstream php-upstream { server ${PHP_UPSTREAM_CONTAINER}:${PHP_UPSTREA
     && rm /etc/nginx/conf.d/default.conf
 
 # Certbot
-RUN apk add python3 python3-dev py3-pip build-base musl-dev libffi-dev gcc openssl-dev cargo
-RUN pip3 install pip --upgrade
-RUN pip3 install certbot-nginx
+RUN apk add build-base musl-dev libffi-dev gcc openssl-dev cargo certbot certbot-nginx
 RUN mkdir /etc/letsencrypt
 
 ADD ./startup.sh /opt/startup.sh

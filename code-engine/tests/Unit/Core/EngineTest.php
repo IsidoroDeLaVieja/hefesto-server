@@ -24,7 +24,7 @@ class EngineTest extends TestCase
         $this->state = StateFixture::get([]);
         $this->state->enableDirectiveDebug();
         $this->engineDispatcherMock = $this->getMockBuilder(EngineDispatcher::class)
-                ->disableOriginalConstructor()->setMethods([
+                ->disableOriginalConstructor()->onlyMethods([
                     'send',
                 ])->getMock();
     }
