@@ -14,16 +14,16 @@ sed -i "s/#DATA_PATH_HOST#/$DATA_PATH_HOST/g" $LARADOCK_DIR/.env
 sed -i "s/#UID#/$UID/g" $LARADOCK_DIR/.env
 
 cd $LARADOCK_DIR
-docker-compose up -d nginx redis php-worker postgres
+docker compose up -d nginx redis php-worker postgres
 
-docker cp php-fpm/composer-install.sh hefesto_php-fpm_1:/var/www
-docker exec -i hefesto_php-fpm_1 bash -c "chmod +x /var/www/composer-install.sh && /var/www/composer-install.sh && rm /var/www/composer-install.sh && chmod +x /var/www/composer.phar"
-docker exec --user www-data -i hefesto_php-fpm_1 bash -c "/var/www/composer.phar install"
+docker cp php-fpm/composer-install.sh hefesto-php-fpm-1:/var/www
+docker exec -i hefesto-php-fpm-1 bash -c "chmod +x /var/www/composer-install.sh && /var/www/composer-install.sh && rm /var/www/composer-install.sh && chmod +x /var/www/composer.phar"
+docker exec --user www-data -i hefesto-php-fpm-1 bash -c "/var/www/composer.phar install"
 
 cd $CODE_DIR
 mkdir storage/app/host
 
-docker exec --user www-data hefesto_php-fpm_1 php /var/www/artisan set:virtualhost:admin localhost
+docker exec --user www-data hefesto-php-fpm-1 php /var/www/artisan set:virtualhost:admin localhost
 $SCRIPT_DIR/config-cache.sh
 
 echo "DONE"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
 set -e
-docker exec hefesto_nginx_1 certbot renew
+docker exec hefesto-nginx-1 certbot renew
 
 echo 'DONE'

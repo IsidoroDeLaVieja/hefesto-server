@@ -1,6 +1,6 @@
 #!/bin/bash
 
 set -e
-docker start hefesto_redis_1 hefesto_postgres_1 hefesto_php-worker_1 hefesto_php-fpm_1 hefesto_nginx_1
+docker start hefesto-redis-1 hefesto-postgres-1 hefesto-php-worker-1 hefesto-php-fpm-1 hefesto-nginx-1
 
 echo 'DONE'

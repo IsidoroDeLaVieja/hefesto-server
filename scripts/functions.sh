@@ -17,8 +17,8 @@ generate_nginx_virtualhost()
 
     cp $SOURCE/laradock/nginx/sites/default.conf.example $SOURCE/laradock/nginx/sites/$VIRTUAL_HOST.conf
     sed -i "s/#domain#/$VIRTUAL_HOST/g" $SOURCE/laradock/nginx/sites/$VIRTUAL_HOST.conf
-    docker exec hefesto_nginx_1 nginx -s reload
+    docker exec hefesto-nginx-1 nginx -s reload
     if [ "$GENERATE_CERT" == "generatecert" ]; then
-        docker exec -it hefesto_nginx_1 certbot --nginx -d $VIRTUAL_HOST
+        docker exec -it hefesto-nginx-1 certbot --nginx -d $VIRTUAL_HOST
     fi
 }

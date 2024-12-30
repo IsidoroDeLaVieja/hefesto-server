@@ -75,6 +75,9 @@ class PathInterpreter {
 
     private function isParam(string $definitionPathParam) : bool 
     {
+        if (empty($definitionPathParam)) {
+            return false;
+        }
         $chars = str_split($definitionPathParam);
         return  $chars[0] === '{' && $chars[count($chars) - 1] === '}';
     }

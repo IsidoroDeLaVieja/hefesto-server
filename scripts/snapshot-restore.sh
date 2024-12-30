@@ -26,7 +26,7 @@ $SCRIPT_DIR/jobs-restart.sh
 $SCRIPT_DIR/cache-flush.sh
 $SCRIPT_DIR/virtualhost-refresh.sh $GENERATE_CERT
 
-cat postgres_bck.gz | gunzip | docker exec -i hefesto_postgres_1 psql -U postgres
+cat postgres_bck.gz | gunzip | docker exec -i hefesto-postgres-1 psql -U postgres
 
 cd ..
 rm -R $NAME_SNAPSHOT

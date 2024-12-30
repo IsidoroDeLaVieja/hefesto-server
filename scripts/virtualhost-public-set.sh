@@ -15,7 +15,7 @@ param_or_die "The format is virtualhost-prod-set.sh virtualhost env key generate
 param_or_die "The format is virtualhost-prod-set.sh virtualhost env key generatecert path" $ENV 
 param_or_die "The format is virtualhost-prod-set.sh virtualhost env key generatecert path" $KEY 
 
-docker exec --user www-data hefesto_php-fpm_1 php /var/www/artisan set:virtualhost:public $VIRTUAL_HOST $ENV $KEY $VIRTUAL_HOST_PATH
+docker exec --user www-data hefesto-php-fpm-1 php /var/www/artisan set:virtualhost:public $VIRTUAL_HOST $ENV $KEY $VIRTUAL_HOST_PATH
 
 generate_nginx_virtualhost $SOURCE $VIRTUAL_HOST $GENERATE_CERT
 

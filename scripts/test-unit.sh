@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker exec hefesto_php-fpm_1 php vendor/phpunit/phpunit/phpunit
+docker exec hefesto-php-fpm-1 php vendor/phpunit/phpunit/phpunit
