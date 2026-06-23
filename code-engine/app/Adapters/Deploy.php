@@ -8,10 +8,36 @@ use Illuminate\Support\Facades\Storage;
 use Exception;
 use Throwable;
 use PharData;
+use App\Adapters\Contracts\DeployMapsInterface;
+use App\Adapters\Contracts\DeployDirectivesInterface;
+use App\Adapters\Contracts\DeployApiInterface;
 
 class Deploy {
 
+    private DeployMapsInterface $deployMaps;
+    private DeployDirectivesInterface $deployDirectives;
+    private DeployApiInterface $deployApi;
+
+    public function __construct(
+        DeployMapsInterface $deployMaps,
+        DeployDirectivesInterface $deployDirectives,
+        DeployApiInterface $deployApi
+    ) {
+        $this->deployMaps = $deployMaps;
+        $this->deployDirectives = $deployDirectives;
+        $this->deployApi = $deployApi;
+    }
+
     public static function execute(string $org, string $env, Request $request) : array 
+    {
+        return (new self(
+            new DeployMaps(),
+            new DeployDirectives(),
+            new DeployApi()
+        ))->instanceExecute($org, $env, $request);
+    }
+
+    public function instanceExecute(string $org, string $env, Request $request) : array 
     {
         $release = 'release'.uniqid();
         $sourceFolder = 'deploytemps/'.uniqid();
@@ -20,10 +46,10 @@ class Deploy {
         try {
             self::validateFile($request);
             self::fileToSourceFolder($request,$sourceFolder);
-            DeployMaps::execute($sourceFolder,$targetFolder,$env);
-            DeployDirectives::execute($sourceFolder,$targetFolder,$release);
+            $this->deployMaps->execute($sourceFolder,$targetFolder,$env);
+            $this->deployDirectives->execute($sourceFolder,$targetFolder,$release);
             self::deployAssets($sourceFolder,$targetFolder);
-            $key = DeployApi::execute($sourceFolder,$targetFolder,$org,$env,$release);
+            $key = $this->deployApi->execute($sourceFolder,$targetFolder,$org,$env,$release);
             self::deploy($org,$env,$key,$release,$targetFolder,config('app.CODE_PATH'));
             Storage::deleteDirectory($sourceFolder);
             self::createStorage($org,$env,$key,config('app.STORAGE_PATH'));
@@ -36,6 +62,11 @@ class Deploy {
     }
 
     public static function cleanReleases(array $releases) : void 
+    {
+        exec('cd '.config('app.CODE_PATH').' && rm -R '.implode(' ',$releases));
+    }
+
+    public function instanceCleanReleases(array $releases) : void 
     {
         exec('cd '.config('app.CODE_PATH').' && rm -R '.implode(' ',$releases));
     }

@@ -14,19 +14,31 @@ class AdminController extends Controller
 {
     private $apiStorage;
     private $apiMemoryFactory;
+    private $deploy;
 
     public function __construct(
         ApiStorage $apiStorage,
-        ApiMemoryFactory $apiMemoryFactory
+        ApiMemoryFactory $apiMemoryFactory,
+        ?Deploy $deploy = null
     ) {
         $this->apiStorage = $apiStorage;
         $this->apiMemoryFactory = $apiMemoryFactory;
+        $this->deploy = $deploy ?? new Deploy(
+            new \App\Adapters\DeployMaps(),
+            new \App\Adapters\DeployDirectives(),
+            new \App\Adapters\DeployApi()
+        );
+    }
+
+    private function getDeploy(): Deploy
+    {
+        return $this->deploy;
     }
 
     public function postApi(Request $request) 
     {
         try {
-            list($release,$key) = Deploy::execute(                
+            list($release,$key) = $this->getDeploy()->instanceExecute(                
                 $request->virtualHost['ORG'],
                 $request->virtualHost['ENV'],
                 $request
@@ -49,7 +61,7 @@ class AdminController extends Controller
                 $request->virtualHost['ENV'],
                 $key
             );
-            Deploy::cleanReleases($cleanedReleases);
+            $this->getDeploy()->instanceCleanReleases($cleanedReleases);
             return response()->json([
                 'key' => $key,
                 'release' => $release

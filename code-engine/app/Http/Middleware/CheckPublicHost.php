@@ -58,7 +58,7 @@ class CheckPublicHost
         return $_SERVER['SERVER_NAME'] === 'localhost' && !filter_var(
             $ip,
             FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
         );
     }
 }

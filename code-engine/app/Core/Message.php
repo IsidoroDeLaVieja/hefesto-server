@@ -148,11 +148,11 @@ class Message {
 
     public function getBodyAsArray() : ?array 
     {
-        try {
-            return json_decode($this->body, true);
-        } catch (\Exception $e) {
+        $data = json_decode($this->body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
             return null;
         }
+        return $data;
     }
 
     public function setBodyAsArray(array $body) : void 

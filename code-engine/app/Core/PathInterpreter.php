@@ -13,7 +13,7 @@ class PathInterpreter {
     {
         $requestPathParams = explode('/',$requestPath);
         $countRequestPathParams = count($requestPathParams);
-        if ($countRequestPathParams === 0) {
+        if ($countRequestPathParams === 1 && $requestPathParams[0] === '') {
             return null;
         }
 

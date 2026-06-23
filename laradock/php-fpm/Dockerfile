@@ -44,7 +44,6 @@ RUN printf "\n" | pecl install -o -f redis \
     && docker-php-ext-enable redis
 
 RUN echo "\n\
-zend_extension=opcache\n\
 opcache.enable=1\n\
 opcache.enable_cli=1\n\
 opcache.memory_consumption=128\n\

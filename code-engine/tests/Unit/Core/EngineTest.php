@@ -7,17 +7,20 @@ namespace Tests\Unit\Core;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixture\StateFixture;
 use Tests\Fixture\DirectivesFixture;
+use Tests\Fixture\DirectiveFixture;
 use App\Core\State;
 use App\Core\EngineDispatcher;
-use App\Adapters\Log;
 use App\Core\Engine;
 use App\Core\Groups;
+use App\Core\DirectiveFactory;
+use App\Core\Directive;
 use SplDoublyLinkedList;
 
 class EngineTest extends TestCase 
 {
     private $state;
     private $engineDispatcherMock;
+    private $directiveFactoryMock;
     
     protected function setUp() : void
     {
@@ -27,10 +30,36 @@ class EngineTest extends TestCase
                 ->disableOriginalConstructor()->onlyMethods([
                     'send',
                 ])->getMock();
+        $this->directiveFactoryMock = $this->getMockBuilder(DirectiveFactory::class)
+                ->disableOriginalConstructor()->onlyMethods([
+                    'make',
+                ])->getMock();
+    }
+
+    private function buildEngine(SplDoublyLinkedList $directives): Engine
+    {
+        return new Engine(
+            $this->state,
+            $directives,
+            $this->engineDispatcherMock,
+            $this->directiveFactoryMock
+        );
+    }
+
+    private function expectMakeDirective(): void
+    {
+        $this->directiveFactoryMock->expects($this->any())
+            ->method('make')
+            ->with(DirectiveFixture::class)
+            ->willReturnCallback(function ($name) {
+                return new $name();
+            });
     }
 
     public function testShouldDoLoopOverDirectives() : void 
     {
+        $this->expectMakeDirective();
+
         $directives = DirectivesFixture::get([[
             'key-header' => 'geom',
             'value-header' => 'cuadrado',
@@ -91,7 +120,7 @@ class EngineTest extends TestCase
         ];
         $this->engineDispatcherMock->expects($this->never())->method('send');
 
-        $engine = new Engine($this->state,$directives,$this->engineDispatcherMock);
+        $engine = $this->buildEngine($directives);
         
         $message = $engine->execute();
         
@@ -107,6 +136,8 @@ class EngineTest extends TestCase
 
     public function testShouldNotExecuteDirectivesWhenThereIsError() : void 
     {
+        $this->expectMakeDirective();
+
         $directives = DirectivesFixture::get([[
             'key-header' => 'x-header-error',
             'value-header' => 'ok'
@@ -176,7 +207,7 @@ class EngineTest extends TestCase
         ];
         $this->engineDispatcherMock->expects($this->never())->method('send');
 
-        $engine = new Engine($this->state,$directives,$this->engineDispatcherMock);
+        $engine = $this->buildEngine($directives);
         
         $message = $engine->execute();
         
@@ -192,6 +223,8 @@ class EngineTest extends TestCase
 
     public function testShouldDispatchItself() : void 
     {
+        $this->expectMakeDirective();
+
         $directives = DirectivesFixture::get([[
             'key-header' => 'geom',
             'value-header' => 'cuadrado'
@@ -270,7 +303,7 @@ class EngineTest extends TestCase
             ],
         ];
 
-        $engine = new Engine($this->state,$directives,$this->engineDispatcherMock);
+        $engine = $this->buildEngine($directives);
 
         $this->engineDispatcherMock->expects($this->once())
             ->method('send')
@@ -288,6 +321,8 @@ class EngineTest extends TestCase
 
     public function testEngineAfter() : void 
     {
+        $this->expectMakeDirective();
+
         $directives = DirectivesFixture::get([[
             'status' => 201,
         ],[
@@ -298,12 +333,255 @@ class EngineTest extends TestCase
             'groups' => [Groups::AFTER_FLOW]
         ]]);
 
-        $engine = new Engine($this->state,$directives,$this->engineDispatcherMock);
+        $engine = $this->buildEngine($directives);
         
         $engine->execute();
         self::assertSame(201,$this->state->message()->getStatus());
 
         $engine->executeAfter();
         self::assertSame(204,$this->state->message()->getStatus());
+    }
+
+    public function testShouldReturnDirectivesCloned() : void 
+    {
+        $directives = DirectivesFixture::get([[
+            'status' => 200,
+        ]]);
+
+        $engine = $this->buildEngine($directives);
+        $cloned = $engine->directives();
+
+        self::assertNotSame($directives, $cloned);
+        self::assertEquals($directives, $cloned);
+    }
+
+    public function testShouldReturnState() : void 
+    {
+        $directives = new SplDoublyLinkedList();
+        $engine = $this->buildEngine($directives);
+
+        self::assertSame($this->state, $engine->state());
+    }
+
+    public function testShouldExecuteWithEmptyDirectives() : void 
+    {
+        $directives = new SplDoublyLinkedList();
+        $this->directiveFactoryMock->expects($this->never())->method('make');
+
+        $engine = $this->buildEngine($directives);
+        $message = $engine->execute();
+
+        self::assertSame(200, $message->getStatus());
+    }
+
+    public function testShouldExecuteWithoutLogging() : void 
+    {
+        $directives = new SplDoublyLinkedList();
+        $this->directiveFactoryMock->expects($this->never())->method('make');
+        $this->engineDispatcherMock->expects($this->never())->method('send');
+
+        $engine = $this->buildEngine($directives);
+        $message = $engine->execute(Groups::NORMAL_FLOW, false);
+
+        self::assertSame([], $this->state->getDebug());
+    }
+
+    public function testShouldNotDispatchWhenNotQueueFlow() : void 
+    {
+        $this->expectMakeDirective();
+
+        $directives = DirectivesFixture::get([[
+            'key-header' => 'geom',
+            'value-header' => 'cuadrado'
+        ],[
+            'status' => 200,
+        ]]);
+
+        $this->engineDispatcherMock->expects($this->never())->method('send');
+
+        $engine = $this->buildEngine($directives);
+        $message = $engine->execute();
+
+        self::assertSame(200, $message->getStatus());
+    }
+
+    public function testShouldNotDispatchTwice() : void 
+    {
+        $this->expectMakeDirective();
+
+        $directives = DirectivesFixture::get([[
+            'key-header' => 'queue-flow',
+            'value-header' => 'ok'
+        ],[
+            'status' => 200,
+        ]]);
+
+        $this->engineDispatcherMock->expects($this->once())->method('send');
+
+        $engine = $this->buildEngine($directives);
+        $engine->execute();
+        $engine->execute();
+
+        self::assertTrue(true);
+    }
+
+    public function testShouldReturnBodyTooBigMessage() : void 
+    {
+        $this->expectMakeDirective();
+
+        $body = str_repeat('a', 401);
+        $this->state->message()->setBody($body);
+        $this->state->message()->setHeader('CONTENT-LENGTH', '401');
+
+        $directives = DirectivesFixture::get([[
+            'status' => 200,
+        ]]);
+
+        $engine = $this->buildEngine($directives);
+        $message = $engine->execute();
+
+        $debug = $this->state->getDebug();
+        self::assertSame('body is too big', $debug[0]['body']);
+        self::assertSame('body is too big', $debug[count($debug) - 1]['body']);
+    }
+
+    public function testExecuteAfterWithoutAfterFlowDirectives() : void 
+    {
+        $this->expectMakeDirective();
+
+        $directives = DirectivesFixture::get([[
+            'status' => 200,
+        ]]);
+
+        $this->engineDispatcherMock->expects($this->never())->method('send');
+
+        $engine = $this->buildEngine($directives);
+        $engine->execute();
+
+        $message = $engine->executeAfter();
+        self::assertSame(200, $message->getStatus());
+    }
+
+    public function testOnInitWhenIsQueued() : void
+    {
+        $this->expectMakeDirective();
+
+        $this->state->queue();
+        $directives = new SplDoublyLinkedList();
+
+        $engine = $this->buildEngine($directives);
+        $engine->execute(Groups::NORMAL_FLOW, true);
+
+        $debug = $this->state->getDebug();
+        self::assertSame('INIT_JOB', $debug[0]['type']);
+        self::assertFalse(isset($debug[0]['realVerb']));
+        self::assertFalse(isset($debug[0]['realPath']));
+        self::assertFalse(isset($debug[0]['queryParams']));
+        self::assertFalse(isset($debug[0]['body']));
+        self::assertArrayHasKey('verb', $debug[0]);
+        self::assertArrayHasKey('path', $debug[0]);
+        self::assertArrayHasKey('headers', $debug[0]);
+        self::assertArrayHasKey('timestamp', $debug[0]);
+    }
+
+    public function testOnFinishWhenIsQueued() : void
+    {
+        $this->expectMakeDirective();
+
+        $this->state->queue();
+        $directives = new SplDoublyLinkedList();
+
+        $engine = $this->buildEngine($directives);
+        $engine->execute(Groups::NORMAL_FLOW, true);
+
+        $debug = $this->state->getDebug();
+        $finish = $debug[count($debug) - 1];
+        self::assertSame('FINISH_JOB', $finish['type']);
+        self::assertFalse(isset($finish['headers']));
+        self::assertFalse(isset($finish['body']));
+        self::assertArrayHasKey('status', $finish);
+        self::assertArrayHasKey('duration', $finish);
+    }
+
+    public function testOnFinishWithCorrelationId() : void
+    {
+        $this->expectMakeDirective();
+
+        $directives = DirectivesFixture::get([[
+            'key-memory' => 'correlationId',
+            'value-memory' => 'corr-12345',
+            'status' => 200,
+        ]]);
+
+        $engine = $this->buildEngine($directives);
+        $engine->execute();
+
+        $debug = $this->state->getDebug();
+        $finish = $debug[count($debug) - 1];
+        self::assertArrayHasKey('correlationId', $finish);
+        self::assertSame('corr-12345', $finish['correlationId']);
+    }
+
+    public function testOnInitWithBodyTooBig() : void
+    {
+        $this->expectMakeDirective();
+
+        $body = str_repeat('x', 401);
+        $this->state->message()->setBody($body);
+        $this->state->message()->setHeader('CONTENT-LENGTH', '401');
+
+        $directives = new SplDoublyLinkedList();
+
+        $engine = $this->buildEngine($directives);
+        $engine->execute();
+
+        $debug = $this->state->getDebug();
+        self::assertSame('body is too big', $debug[0]['body']);
+    }
+
+    public function testDirectiveWithExplicitGroups() : void
+    {
+        $this->expectMakeDirective();
+
+        $directives = new SplDoublyLinkedList();
+        $directives->push(new \App\Core\DirectiveRequest(
+            '1',
+            \Tests\Fixture\DirectiveFixture::class,
+            ['status' => 201],
+            [Groups::NORMAL_FLOW]
+        ));
+
+        $engine = $this->buildEngine($directives);
+        $message = $engine->execute();
+
+        self::assertSame(201, $message->getStatus());
+    }
+
+    public function testShouldUseCustomDirectiveFactory() : void 
+    {
+        $customDirective = $this->getMockBuilder(Directive::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['execute'])
+            ->getMock();
+
+        $customDirective->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function (State $state, array $config) {
+                $state->message()->setStatus(418);
+            });
+
+        $this->directiveFactoryMock->expects($this->once())
+            ->method('make')
+            ->with(DirectiveFixture::class)
+            ->willReturn($customDirective);
+
+        $directives = DirectivesFixture::get([[
+            'status' => 200,
+        ]]);
+
+        $engine = $this->buildEngine($directives);
+        $message = $engine->execute();
+
+        self::assertSame(418, $message->getStatus());
     }
 }

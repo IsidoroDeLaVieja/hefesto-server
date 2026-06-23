@@ -155,6 +155,48 @@ class DirectiveTest extends TestCase
         $this->assertSame($value,$this->state->message()->getQueryParam($key));
     }
 
+    public function testDirectiveWithEmptyConfig() : void 
+    {
+        $this->assertNull($this->state->message()->getHeader('x-header'));
+        
+        $this->directive->call($this->state, [], [Groups::NORMAL_FLOW], 1);
+
+        $this->assertNull($this->state->message()->getHeader('x-header'));
+        $this->assertTrue($this->state->groups()->isEnabled(Groups::NORMAL_FLOW));
+        $this->assertFalse($this->state->groups()->isEnabled(Groups::ERROR_FLOW));
+    }
+
+    public function testDirectiveAliasWithNonExistentKeyReturnsNull() : void
+    {
+        $this->state->message()->setHeader('my-key', 'my-value');
+
+        $this->directive->call($this->state, [
+            'key-header' => 'x-header',
+            'value-header' => '$.message.header.non-existent-key'
+        ], [Groups::NORMAL_FLOW], 1);
+
+        // When the alias key does not exist, it resolves to null,
+        // so the header is not set (or set to an empty/null value)
+        $this->assertNull($this->state->message()->getHeader('x-header'));
+    }
+
+    public function testDirectiveWithMultipleCallsAndAccumulatedDebug() : void
+    {
+        $this->directive->call($this->state, [
+            'key-header' => 'x-first',
+            'value-header' => 'first-value'
+        ], [Groups::NORMAL_FLOW], 1);
+
+        $this->directive->call($this->state, [
+            'key-header' => 'x-second',
+            'value-header' => 'second-value'
+        ], [Groups::NORMAL_FLOW], 2);
+
+        $this->assertSame('first-value', $this->state->message()->getHeader('x-first'));
+        $this->assertSame('second-value', $this->state->message()->getHeader('x-second'));
+        $this->assertCount(2, $this->state->getDebug());
+    }
+
     public function testDirectiveNoDebug() : void 
     {
         $this->state = StateFixture::get([]);

@@ -52,12 +52,6 @@ class Alias
         return [$object, $action, $arguments, $keys];
     }
 
-    private function storage(array $keyParts) : array 
-    {
-        $object =  $this->state->storage();
-        return $this->memory($keyParts,$object);
-    }
-
     private function memory(array $keyParts, ?object $object = null) : array 
     {
         $object =  is_null($object) ? $this->state->memory(): $object;

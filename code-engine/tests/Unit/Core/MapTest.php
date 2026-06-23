@@ -9,22 +9,60 @@ use App\Core\Map;
 
 class MapTest extends TestCase 
 {
-    private $map;
-    
-    protected function setUp() : void
+    public function testGetReturnsValueForExistingStringKey() : void
     {
-        $this->map = new Map(__DIR__.'/../../Fixture/Maps/map-fixture.json');
+        $map = new Map(['name' => 'yolanda', 'age' => 32]);
+        $this->assertSame('yolanda', $map->get('name'));
     }
 
-    public function testGet() : void
+    public function testGetReturnsValueForExistingIntegerKey() : void
     {
-        $this->assertNull($this->map->get('adsfdsf'));
-        $this->assertSame('yolanda',$this->map->get('name'));
-        $this->assertSame(32,$this->map->get('age'));
+        $map = new Map(['name' => 'yolanda', 'age' => 32]);
+        $this->assertSame(32, $map->get('age'));
     }
 
-    public function testRead() : void
+    public function testGetReturnsNullForNonExistingKey() : void
     {
-        $this->assertSame(['name' => 'yolanda', 'age' => 32],$this->map->read());
+        $map = new Map(['name' => 'yolanda', 'age' => 32]);
+        $this->assertNull($map->get('adsfdsf'));
+    }
+
+    public function testReadReturnsFullStorage() : void
+    {
+        $storage = ['name' => 'yolanda', 'age' => 32];
+        $map = new Map($storage);
+        $this->assertSame($storage, $map->read());
+    }
+
+    public function testEmptyStorageReturnsNullOnGet() : void
+    {
+        $map = new Map([]);
+        $this->assertNull($map->get('anything'));
+    }
+
+    public function testEmptyStorageReturnsEmptyArrayOnRead() : void
+    {
+        $map = new Map([]);
+        $this->assertSame([], $map->read());
+    }
+
+    public function testGetReturnsNullWhenKeyHasNullValue() : void
+    {
+        $map = new Map(['foo' => null]);
+        $this->assertNull($map->get('foo'));
+    }
+
+    public function testKeyExistsWithNullValueDoesNotFallbackToMissingKey() : void
+    {
+        $map = new Map(['foo' => null]);
+        $this->assertTrue(array_key_exists('foo', $map->read()));
+        $this->assertNull($map->get('foo'));
+    }
+
+    public function testGetWithNumericKey() : void
+    {
+        $map = new Map([0 => 'zero', 1 => 'one']);
+        $this->assertSame('zero', $map->get('0'));
+        $this->assertSame('one', $map->get('1'));
     }
 }

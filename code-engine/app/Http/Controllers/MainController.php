@@ -8,25 +8,34 @@ use Illuminate\Http\Request;
 use App\Adapters\ApiMemoryFactory;
 use App\Core\Engine;
 use App\Core\State;
+use App\Core\Alias;
+use App\Core\Groups;
+use App\Core\ExecutionTimeMemory;
+use App\Core\FilesystemMapRepository;
 use App\Core\EngineDispatcher;
 use App\Core\Message;
 use App\Core\PathInterpreter;
 use App\Core\Api;
+use App\Core\DirectiveFactory;
+use App\Core\DefaultDirectiveFactory;
 
 class MainController extends Controller
 {
     private $pathInterpreter;
     private $engineDispatcher;
     private $apiMemoryFactory;
+    private $directiveFactory;
 
     public function __construct(
         PathInterpreter $pathInterpreter,
         EngineDispatcher $engineDispatcher,
-        ApiMemoryFactory $apiMemoryFactory
+        ApiMemoryFactory $apiMemoryFactory,
+        ?DirectiveFactory $directiveFactory = null
     ){
         $this->pathInterpreter = $pathInterpreter;
         $this->engineDispatcher = $engineDispatcher;
         $this->apiMemoryFactory = $apiMemoryFactory;
+        $this->directiveFactory = $directiveFactory ?? new DefaultDirectiveFactory();
     }
 
     public function execute(Request $request) 
@@ -54,14 +63,27 @@ class MainController extends Controller
             200
         );
 
-        $state = new State($message,$this->getStateConfig(
+        $groups = new Groups();
+        $memory = new ExecutionTimeMemory();
+        $mapRepository = new FilesystemMapRepository(
+            config('app.CODE_PATH') . $request->api['release'] . '/'
+        );
+        $config = $this->getStateConfig(
             $request->virtualHost['ORG'],
             $request->virtualHost['ENV'],
             $request->api['key'],
             $request->api['release'],
             $pathInfo['DEFINITION_VERB'],
             $pathInfo['DEFINITION_PATH']
-        ));
+        );
+        $state = new State(
+            $message,
+            $config,
+            $groups,
+            $memory,
+            $mapRepository
+        );
+        $state->setAlias(new Alias($state));
 
         $engine = new Engine(
             $state,
@@ -69,7 +91,8 @@ class MainController extends Controller
                 $pathInfo['DEFINITION_VERB'],
                 $pathInfo['DEFINITION_PATH']
             ),
-            $this->engineDispatcher
+            $this->engineDispatcher,
+            $this->directiveFactory
         );
 
         $message = $engine->execute();

@@ -1,19 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
-use Exception;
 
 class Map {
 
     private $storage;
     
-    public function __construct(string $path)
+    public function __construct(array $storage = [])
     {
-        try {
-            $this->storage = json_decode(file_get_contents($path),true);
-        } catch (Exception $e) {
-            $this->storage = [];
-        }
+        $this->storage = $storage;
     }
 
     public function get(string $key) 

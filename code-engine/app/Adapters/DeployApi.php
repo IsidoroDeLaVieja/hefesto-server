@@ -11,12 +11,23 @@ use SplDoublyLinkedList;
 use App\Core\DirectiveRequest;
 use Exception;
 use Throwable;
+use App\Adapters\Contracts\DeployApiInterface;
 
-class DeployApi {
+class DeployApi implements DeployApiInterface {
 
     private const ALLOWED_VERBS = ['ALL','GET','POST','PUT','DELETE','PATCH','OPTIONS','HEADER'];
 
-    public static function execute(        
+    public function execute(        
+        string $sourceFolder,
+        string $targetFolder,
+        string $org,
+        string $env,
+        string $release
+    ) : string {
+        return self::staticExecute($sourceFolder, $targetFolder, $org, $env, $release);
+    }
+
+    public static function staticExecute(        
         string $sourceFolder,
         string $targetFolder,
         string $org,

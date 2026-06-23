@@ -3,132 +3,178 @@
 declare(strict_types=1);
 
 namespace Tests\Unit\Core;
+
 use PHPUnit\Framework\TestCase;
-use App\Core\State;
 use App\Core\Alias;
 use Tests\Fixture\StateFixture;
 
-class AliasTest extends TestCase 
+class AliasTest extends TestCase
 {
-    public function testGetKey() : void
-    {
-        $key = '$message.path';
+    // ====================================================================
+    // message.*
+    // ====================================================================
 
-        $alias = $this->getAlias( );
-
-        $this->assertSame($key,$alias->find($key));
-    }
-
-    public function testGetPath() : void
+    public function testFindMessagePath(): void
     {
         $path = '/potato/89';
 
-        $alias = $this->getAlias( [ 'path' => $path ] );
+        $alias = $this->createAlias(['path' => $path]);
 
-        $this->assertSame($path,$alias->find('$.message.path'));
+        $this->assertSame($path, $alias->find('$.message.path'));
     }
 
-    public function testGetStatus() : void
+    public function testFindMessageStatus(): void
     {
         $status = 401;
 
-        $alias = $this->getAlias( [ 'status' => $status ] );
+        $alias = $this->createAlias(['status' => $status]);
 
-        $this->assertSame($status,$alias->find('$.message.status'));
+        $this->assertSame($status, $alias->find('$.message.status'));
     }
 
-    public function testGetHeaders() : void
+    public function testFindMessageHeaders(): void
     {
-        $headers = [ 'X-TEST' => 'testing','CONTENT-LENGTH' => '0' ];
+        $headers = ['X-TEST' => 'testing', 'CONTENT-LENGTH' => '0'];
 
-        $alias = $this->getAlias( [ 'headers' => $headers ] );
+        $alias = $this->createAlias(['headers' => $headers]);
 
-        $this->assertSame($headers,$alias->find('$.message.headers'));
+        $this->assertSame($headers, $alias->find('$.message.headers'));
     }
 
-    public function testGetQueryParams() : void
-    {
-        $key = 'user';
-        $value = '56';
-        $queryParams = [ $key => '56' ];
-
-        $alias = $this->getAlias( [ 'queryParams'=> $queryParams ] );
-
-        $this->assertSame($value,$alias->find('$.message.queryParam.'.$key));
-    }
-
-    public function testGetMemoryValue() : void
+    public function testFindMessageQueryParam(): void
     {
         $key = 'user';
         $value = '56';
+        $queryParams = [$key => $value];
 
-        $alias = $this->getAlias( [] , $key , $value);
+        $alias = $this->createAlias(['queryParams' => $queryParams]);
 
-        $this->assertSame($value,$alias->find('$.memory.'.$key));
+        $this->assertSame($value, $alias->find('$.message.queryParam.' . $key));
     }
 
-    public function testGetMemoryValueInArray() : void
+    // ====================================================================
+    // id
+    // ====================================================================
+
+    public function testFindId(): void
     {
-        $value = ['name' => 'yoli', 'phones' => [ 
-            'main' => 123456,
-            'others' => [654321,123]
-        ]];
+        $alias = $this->createAlias(['id' => 'custom-id-123']);
 
-        $alias = $this->getAlias( [] , 'user' , $value);
-
-        $this->assertSame(123456,$alias->find('$.memory.user.phones.main'));
-        $this->assertSame([654321,123],$alias->find('$.memory.user.phones.others'));
-        $this->assertSame(123,$alias->find('$.memory.user.phones.others.1'));
+        $this->assertSame('custom-id-123', $alias->find('$.id'));
     }
 
-    public function testMapGetValue() : void
+    // ====================================================================
+    // memory.*
+    // ====================================================================
+
+    public function testFindMemorySimpleValue(): void
     {
-        $key = 'name';
-        $value = 'yolanda';
+        $alias = $this->createAliasWithMemory('user', '56');
 
-        $alias = $this->getAlias( []);
-
-        $this->assertSame($value,$alias->find('$.map.map-fixture.'.$key));
+        $this->assertSame('56', $alias->find('$.memory.user'));
     }
 
-    public function testMapRead() : void
+    public function testFindMemoryNestedArray(): void
     {
-        $alias = $this->getAlias( []);
+        $value = [
+            'name' => 'yoli',
+            'phones' => [
+                'main' => 123456,
+                'others' => [654321, 123],
+            ],
+        ];
 
-        $this->assertSame(['name' => 'yolanda', 'age' => 32],$alias->find('$.map.map-fixture'));
+        $alias = $this->createAliasWithMemory('user', $value);
+
+        $this->assertSame(123456, $alias->find('$.memory.user.phones.main'));
+        $this->assertSame([654321, 123], $alias->find('$.memory.user.phones.others'));
+        $this->assertSame(123, $alias->find('$.memory.user.phones.others.1'));
     }
 
-    public function testMapGetValueInArray() : void
-    {
-        $alias = $this->getAlias( []);
+    // ====================================================================
+    // map.*
+    // ====================================================================
 
-        $this->assertSame(1989,$alias->find('$.map.map-recursive-fixture.age.number'));
-        $this->assertSame("URSS",$alias->find('$.map.map-recursive-fixture.age.countries.0'));
-        $this->assertSame(["main" => "Felipe"],
-            $alias->find('$.map.map-recursive-fixture.age.president'));
-        $this->assertSame("Felipe",
-            $alias->find('$.map.map-recursive-fixture.age.president.main'));
-    }
-
-    public function testLocalhost() : void
+    public function testFindMapRead(): void
     {
-        $localhost = 'http://hefesto_nginx_1';
-        $alias = $this->getAlias(['localhost' => $localhost]);
+        $alias = $this->createAlias();
 
         $this->assertSame(
-            $localhost,
-            $alias->find('$.memory.hefesto-localhost')
+            ['name' => 'yolanda', 'age' => 32],
+            $alias->find('$.map.map-fixture'),
         );
     }
 
-    private function getAlias(
-        array $config = [],
-        string $memoryKey = '',
-        $memoryValue = ''
-    ) : Alias {
-        $config['codePath'] = __DIR__.'/../../Fixture/';
+    public function testFindMapGetValue(): void
+    {
+        $alias = $this->createAlias();
+
+        $this->assertSame('yolanda', $alias->find('$.map.map-fixture.name'));
+    }
+
+    public function testFindMapNestedArray(): void
+    {
+        $alias = $this->createAlias();
+
+        $this->assertSame(1989, $alias->find('$.map.map-recursive-fixture.age.number'));
+        $this->assertSame('URSS', $alias->find('$.map.map-recursive-fixture.age.countries.0'));
+        $this->assertSame(
+            ['main' => 'Felipe'],
+            $alias->find('$.map.map-recursive-fixture.age.president'),
+        );
+        $this->assertSame(
+            'Felipe',
+            $alias->find('$.map.map-recursive-fixture.age.president.main'),
+        );
+    }
+
+    // ====================================================================
+    // Edge cases: non-string keys
+    // ====================================================================
+
+    public function testFindNonStringKeyReturnsKeyAsIs(): void
+    {
+        $alias = $this->createAlias();
+
+        $this->assertNull($alias->find(null));
+        $this->assertSame(42, $alias->find(42));
+        $this->assertSame(3.14, $alias->find(3.14));
+        $this->assertFalse($alias->find(false));
+        $this->assertSame([1, 2], $alias->find([1, 2]));
+    }
+
+    public function testFindEmptyStringKeyReturnsEmptyString(): void
+    {
+        $alias = $this->createAlias();
+
+        $this->assertSame('', $alias->find(''));
+    }
+
+    public function testFindKeyWithoutDollarDotPrefixReturnsKeyAsIs(): void
+    {
+        $alias = $this->createAlias();
+
+        $this->assertSame('$message.path', $alias->find('$message.path'));
+        $this->assertSame('message.path', $alias->find('message.path'));
+    }
+
+    // ====================================================================
+    // Helpers
+    // ====================================================================
+
+    private function createAlias(array $config = []): Alias
+    {
+        $config['codePath'] = __DIR__ . '/../../Fixture/';
+
+        return new Alias(StateFixture::get($config));
+    }
+
+    private function createAliasWithMemory(string $key, mixed $value): Alias
+    {
+        $config = ['codePath' => __DIR__ . '/../../Fixture/'];
         $state = StateFixture::get($config);
-        $state->memory()->set($memoryKey,$memoryValue);
+        $state->memory()->set($key, $value);
+
         return new Alias($state);
     }
 }

@@ -6,10 +6,11 @@ namespace App\Adapters;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 use Throwable;
+use App\Adapters\Contracts\DeployMapsInterface;
 
-class DeployMaps {
+class DeployMaps implements DeployMapsInterface {
 
-    public static function execute(        
+    public function execute(        
         string $sourceFolder,
         string $targetFolder,
         string $env

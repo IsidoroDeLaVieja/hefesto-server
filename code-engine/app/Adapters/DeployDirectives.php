@@ -6,10 +6,19 @@ namespace App\Adapters;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Exception;
+use App\Adapters\Contracts\DeployDirectivesInterface;
 
-class DeployDirectives {
+class DeployDirectives implements DeployDirectivesInterface {
 
-    public static function execute(        
+    public function execute(        
+        string $sourceFolder,
+        string $targetFolder,
+        string $release
+    ) : void {
+        self::staticExecute($sourceFolder, $targetFolder, $release);
+    }
+
+    public static function staticExecute(        
         string $sourceFolder,
         string $targetFolder,
         string $release

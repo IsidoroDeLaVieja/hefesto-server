@@ -11,17 +11,20 @@ class Engine {
     private $state;
     private $directives;
     private $engineDispatcher;
+    private $directiveFactory;
     private $dispatched;
     private $timeInit;
 
     public function __construct(
         State $state, 
         SplDoublyLinkedList $directives,
-        EngineDispatcher $engineDispatcher
+        EngineDispatcher $engineDispatcher,
+        ?DirectiveFactory $directiveFactory = null
     ) {
         $this->state = $state;
         $this->directives = $directives;
         $this->engineDispatcher = $engineDispatcher;
+        $this->directiveFactory = $directiveFactory ?? new DefaultDirectiveFactory();
         $this->dispatched = false;
     }
 
@@ -79,7 +82,7 @@ class Engine {
             $groups = $directiveRequest->groups 
                         ?   $directiveRequest->groups 
                         :   [ Groups::NORMAL_FLOW ] ;
-            $directive = new $directiveRequest->name();
+            $directive = $this->directiveFactory->make($directiveRequest->name);
             $directive->call($this->state,$directiveRequest->config,$groups,$order);
             $this->checkDispatch($order);
 

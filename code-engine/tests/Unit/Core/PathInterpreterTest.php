@@ -60,6 +60,16 @@ class PathInterpreterTest extends TestCase
         ];
     }
 
+    public static function middlewareProvider()
+    {
+        return [
+            'any verb and path' => ['GET','/api/engine'],
+            'post verb' => ['POST','/api/54/mark'],
+            'different path' => ['PUT','/some/random/path'],
+            'root' => ['GET','/'],
+        ];
+    }
+
     #[DataProvider('foundProvider')]
     public function testPathFound(
         string $requestVerb,
@@ -83,8 +93,8 @@ class PathInterpreterTest extends TestCase
         $this->assertNull($pathInfo);
     }
 
-    #[DataProvider('notFoundProvider')]
-    public function testMiddleware(
+    #[DataProvider('middlewareProvider')]
+    public function testMiddlewareFirstInList(
         string $requestVerb,
         string $requestPath
     ) : void {
@@ -94,5 +104,67 @@ class PathInterpreterTest extends TestCase
         $this->assertSame('ALL',$pathInfo['DEFINITION_VERB']);
         $this->assertSame('/requests',$pathInfo['DEFINITION_PATH']);
         $this->assertSame([],$pathInfo['PATH_PARAMS']);
+    }
+
+    public function testMiddlewareNotFirstInList() : void
+    {
+        $pathInfo = $this->interpreter->execute('DELETE','/api/engine',[
+            ['GET', '/api/engine'],
+            ['ALL', '/requests']
+        ]);
+        $this->assertSame('ALL',$pathInfo['DEFINITION_VERB']);
+        $this->assertSame('/requests',$pathInfo['DEFINITION_PATH']);
+        $this->assertSame([],$pathInfo['PATH_PARAMS']);
+    }
+
+    public function testEmptyActionsReturnsNull() : void
+    {
+        $pathInfo = $this->interpreter->execute('GET','/api/engine',[]);
+        $this->assertNull($pathInfo);
+    }
+
+    public function testRootPathMatches() : void
+    {
+        $pathInfo = $this->interpreter->execute('GET','/',[
+            ['GET', '/']
+        ]);
+        $this->assertSame('GET',$pathInfo['DEFINITION_VERB']);
+        $this->assertSame('/',$pathInfo['DEFINITION_PATH']);
+        $this->assertSame([],$pathInfo['PATH_PARAMS']);
+    }
+
+    public function testAllVerbMiddlewareOnlyMatchesRequestsPath() : void
+    {
+        $pathInfo = $this->interpreter->execute('GET','/api/engine',[
+            ['ALL', '/users']
+        ]);
+        $this->assertNull($pathInfo);
+    }
+
+    public function testSameSegmentCountButStaticMismatch() : void
+    {
+        $pathInfo = $this->interpreter->execute('GET','/api/engine',[
+            ['GET', '/api/test']
+        ]);
+        $this->assertNull($pathInfo);
+    }
+
+    public function testSameSegmentCountMismatchThenMatch() : void
+    {
+        $pathInfo = $this->interpreter->execute('GET','/api/engine/56',[
+            ['GET', '/api/engine/{id}'],
+            ['GET', '/api/test/56']
+        ]);
+        $this->assertSame('GET',$pathInfo['DEFINITION_VERB']);
+        $this->assertSame('/api/engine/{id}',$pathInfo['DEFINITION_PATH']);
+        $this->assertSame(['id'=>'56'],$pathInfo['PATH_PARAMS']);
+    }
+
+    public function testExplodeEmptyPathReturnsEmptyArray() : void
+    {
+        $pathInfo = $this->interpreter->execute('GET','',[
+            ['GET', '/api/engine']
+        ]);
+        $this->assertNull($pathInfo);
     }
 }

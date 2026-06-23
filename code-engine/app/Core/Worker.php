@@ -23,16 +23,26 @@ class Worker
             
             $work = $this->work();
             if (!$work) {
-                sleep(self::DELAY);
+                $this->delay();
                 continue;
             }
             $this->countJobs++;
 
             if ($this->countJobs >= self::MAX_JOBS) {
-                exit;
+                $this->shutdown();
             }
 
         }
+    }
+
+    protected function delay() : void
+    {
+        sleep(self::DELAY);
+    }
+
+    protected function shutdown() : never
+    {
+        exit;
     }
 
     private function work() : bool

@@ -8,10 +8,12 @@ use SplDoublyLinkedList;
 class EngineDispatcher {
 
     private $dispatcher;
+    private $engineFactory;
 
-    public function __construct(SenderEngineDispatcher $dispatcher) 
+    public function __construct(SenderEngineDispatcher $dispatcher, EngineFactory $engineFactory) 
     {
         $this->dispatcher = $dispatcher;
+        $this->engineFactory = $engineFactory;
     }
 
     public function send(Engine $engine, int $oldOrder, int $delay) : void 
@@ -32,7 +34,7 @@ class EngineDispatcher {
             $newOrder++;
         }
 
-        $engineToDispatch = new Engine($state,$newDirectives,$this);
-        $this->dispatcher->execute($engineToDispatch,$delay);
+        $engineToDispatch = $this->engineFactory->make($state, $newDirectives, $this);
+        $this->dispatcher->execute($engineToDispatch, $delay);
     }
 }

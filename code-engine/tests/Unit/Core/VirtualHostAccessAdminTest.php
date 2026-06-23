@@ -1,87 +1,176 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\Core;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use App\Core\VirtualHostStorage;
-use App\Core\ExecutionTimeMemory;
 use App\Core\VirtualHostAccessAdmin;
 
 class VirtualHostAccessAdminTest extends TestCase
 {
-    private $virtualHostStorage;
-    private $virtualHostAccessAdmin;
+    private VirtualHostStorage&MockObject $virtualHostStorage;
+    private VirtualHostAccessAdmin $virtualHostAccessAdmin;
 
-    protected function setUp() : void
+    protected function setUp(): void
     {
-        $this->virtualHostStorage = new VirtualHostStorage(
-            new ExecutionTimeMemory()
-        );
+        $this->virtualHostStorage = $this->createMock(VirtualHostStorage::class);
         $this->virtualHostAccessAdmin = new VirtualHostAccessAdmin(
             $this->virtualHostStorage
         );
     }
 
-    public function testGetInfo() : void
+    public function testGetReturnsInfoWhenAdminAndPublicExistWithCheckKeyFalse(): void
     {
         $hostAdmin = 'admin.delavieja.com';
-        $host = 'public.delavieja.com';
+        $hostPublic = 'public.delavieja.com';
         $key = '333';
         $env = 'pro';
         $path = '';
 
-        $this->virtualHostStorage->setAdmin($hostAdmin);
-        $this->virtualHostStorage->setPublic($host,$key,$env,$path);
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getAdmin')
+            ->with($hostAdmin)
+            ->willReturn(['ORG' => $hostAdmin, 'TYPE' => 'ADMIN']);
 
-        $info = $this->virtualHostAccessAdmin->get($hostAdmin,$host,'111',false);
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getPublic')
+            ->with($hostPublic)
+            ->willReturn([
+                'ORG' => $hostPublic,
+                'TYPE' => 'PUBLIC',
+                'KEY' => $key,
+                'ENV' => $env,
+                'PATH' => $path,
+            ]);
 
-        $this->assertSame( 
-            ['ORG' => $host,'TYPE' => 'ADMIN','ENV' => $env ,'PATH' => $path],
+        $info = $this->virtualHostAccessAdmin->get(
+            $hostAdmin, $hostPublic, 'wrong-key', false
+        );
+
+        $this->assertSame(
+            ['ORG' => $hostPublic, 'TYPE' => 'ADMIN', 'ENV' => $env, 'PATH' => $path],
             $info
         );
     }
 
-    public function testExceptionIfAdminDoesNotExist() : void 
+    public function testGetReturnsInfoWhenAdminAndPublicExistWithCorrectKey(): void
     {
         $hostAdmin = 'admin.delavieja.com';
-        $host = 'public.delavieja.com';
+        $hostPublic = 'public.delavieja.com';
         $key = '333';
         $env = 'pro';
         $path = '';
 
-        $this->virtualHostStorage->setPublic($host,$key,$env,$path);
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getAdmin')
+            ->with($hostAdmin)
+            ->willReturn(['ORG' => $hostAdmin, 'TYPE' => 'ADMIN']);
 
-        $this->expectException(\Exception::class);
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getPublic')
+            ->with($hostPublic)
+            ->willReturn([
+                'ORG' => $hostPublic,
+                'TYPE' => 'PUBLIC',
+                'KEY' => $key,
+                'ENV' => $env,
+                'PATH' => $path,
+            ]);
 
-        $this->virtualHostAccessAdmin->get($hostAdmin,$host,$key,true);
+        $info = $this->virtualHostAccessAdmin->get(
+            $hostAdmin, $hostPublic, $key, true
+        );
+
+        $this->assertSame(
+            ['ORG' => $hostPublic, 'TYPE' => 'ADMIN', 'ENV' => $env, 'PATH' => $path],
+            $info
+        );
     }
 
-    public function testExceptionIfPublicDoesNotExist() : void 
+    public function testExceptionWhenAdminDoesNotExist(): void
     {
         $hostAdmin = 'admin.delavieja.com';
-        $host = 'public.delavieja.com';
-        $key = '333';
+        $hostPublic = 'public.delavieja.com';
 
-        $this->virtualHostStorage->setAdmin($hostAdmin);
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getAdmin')
+            ->with($hostAdmin)
+            ->willReturn(null);
+
+        $this->virtualHostStorage
+            ->expects($this->never())
+            ->method('getPublic');
 
         $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('admin does not exist');
 
-        $this->virtualHostAccessAdmin->get($hostAdmin,$host,$key,true);
+        $this->virtualHostAccessAdmin->get(
+            $hostAdmin, $hostPublic, '333', true
+        );
     }
 
-    public function testExceptionIfKeyIsNotCorrect() : void 
+    public function testExceptionWhenPublicDoesNotExist(): void
     {
         $hostAdmin = 'admin.delavieja.com';
-        $host = 'public.delavieja.com';
-        $key = '333';
-        $env = 'pro';
-        $path = '';
+        $hostPublic = 'public.delavieja.com';
 
-        $this->virtualHostStorage->setAdmin($hostAdmin);
-        $this->virtualHostStorage->setPublic($host,$key,$env,$path);
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getAdmin')
+            ->with($hostAdmin)
+            ->willReturn(['ORG' => $hostAdmin, 'TYPE' => 'ADMIN']);
+
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getPublic')
+            ->with($hostPublic)
+            ->willReturn(null);
 
         $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('public does not exist');
 
-        $this->virtualHostAccessAdmin->get($hostAdmin,$host,'456',true);
+        $this->virtualHostAccessAdmin->get(
+            $hostAdmin, $hostPublic, '333', true
+        );
+    }
+
+    public function testExceptionWhenKeyIsNotCorrect(): void
+    {
+        $hostAdmin = 'admin.delavieja.com';
+        $hostPublic = 'public.delavieja.com';
+        $key = '333';
+
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getAdmin')
+            ->with($hostAdmin)
+            ->willReturn(['ORG' => $hostAdmin, 'TYPE' => 'ADMIN']);
+
+        $this->virtualHostStorage
+            ->expects($this->once())
+            ->method('getPublic')
+            ->with($hostPublic)
+            ->willReturn([
+                'ORG' => $hostPublic,
+                'TYPE' => 'PUBLIC',
+                'KEY' => $key,
+                'ENV' => 'pro',
+                'PATH' => '',
+            ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('key is not correct');
+
+        $this->virtualHostAccessAdmin->get(
+            $hostAdmin, $hostPublic, 'wrong-key', true
+        );
     }
 }
