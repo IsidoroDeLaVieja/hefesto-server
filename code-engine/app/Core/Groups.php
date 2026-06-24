@@ -4,52 +4,56 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class Groups {
-
-    private $groups = [];
-
+class Groups
+{
     public const NORMAL_FLOW = 'NORMAL_FLOW';
     public const ERROR_FLOW = 'ERROR_FLOW';
     public const QUEUE_FLOW = 'QUEUE_FLOW';
     public const AFTER_FLOW = 'AFTER_FLOW';
-    
-    public function isEnabled(string $key) : bool
+
+    /** @var string[] */
+    private array $groups = [];
+
+    public function isEnabled(string $key): bool
     {
-        return in_array(strtoupper($key),$this->groups);
+        return in_array(strtoupper($key), $this->groups, true);
     }
 
-    public function isAnyKeyEnabled(array $keys) : bool
+    public function isAnyKeyEnabled(array $keys): bool
     {
-        array_walk($keys, function(&$value){
-            $value = strtoupper($value);
-        });
-        return count(array_intersect($keys,$this->groups)) > 0;
+        $upperKeys = array_map(strtoupper(...), $keys);
+
+        return array_intersect($upperKeys, $this->groups) !== [];
     }
 
-    public function enable(string $key) : void
+    public function enable(string $key): void
     {
         $group = strtoupper($key);
+
         if ($group === self::QUEUE_FLOW || $group === self::ERROR_FLOW) {
             $this->disableAll();
         }
+
         $this->groups[] = $group;
         $this->groups = array_unique($this->groups);
     }
 
-    public function disable(string $key) : void
+    public function disable(string $key): void
     {
+        $upperKey = strtoupper($key);
+
         if ($this->isEnabled($key)) {
-            $key = array_search(strtoupper($key),$this->groups);
-            unset($this->groups[$key]);
+            $foundKey = array_search($upperKey, $this->groups, true);
+            unset($this->groups[$foundKey]);
         }
     }
 
-    public function disableAll() : void 
+    public function disableAll(): void
     {
         $this->groups = [];
     }
 
-    public function read() : array 
+    public function read(): array
     {
         return $this->groups;
     }

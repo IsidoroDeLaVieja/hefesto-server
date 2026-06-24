@@ -3,44 +3,57 @@
 declare(strict_types=1);
 
 namespace App\Adapters;
-use Illuminate\Support\Facades\Storage;
-use Exception;
-use Throwable;
+
 use App\Adapters\Contracts\DeployMapsInterface;
+use Exception;
+use Illuminate\Support\Facades\Storage;
 
-class DeployMaps implements DeployMapsInterface {
-
-    public function execute(        
+class DeployMaps implements DeployMapsInterface
+{
+    public function execute(
         string $sourceFolder,
         string $targetFolder,
         string $env
-    ) : void {
+    ): void {
         $files = array_merge(
-            Storage::files($sourceFolder.'/Maps'),
-            Storage::files($sourceFolder.'/Maps/'.$env)
+            Storage::files("{$sourceFolder}/Maps"),
+            Storage::files("{$sourceFolder}/Maps/{$env}")
         );
-        self::validateList($files);
-        self::copyList($files,$targetFolder);
+
+        $this->validateList($files);
+        $this->copyList($files, $targetFolder);
     }
 
-    private static function validateList(array $files) : void 
+    private function validateList(array $files): void
     {
         foreach ($files as $file) {
-            $extension =  substr($file, -5);
-            if ($extension !== '.json') {
-                throw new Exception('your map '.basename($file).' is not json', 400);
-            }
-            $map = json_decode(Storage::get($file),true);
-            if ( !is_array($map) ) {
-                throw new Exception('your map '.basename($file).' is badly formed', 400);
-            }
+            $this->ensureIsJsonMap($file);
         }
     }
 
-    private static function copyList(array $files,string $targetFolder) : void 
+    private function ensureIsJsonMap(string $file): void
+    {
+        if (!str_ends_with($file, '.json')) {
+            throw new Exception(
+                'your map ' . basename($file) . ' is not json',
+                400
+            );
+        }
+
+        $content = Storage::get($file);
+
+        if (!is_array(json_decode($content, true))) {
+            throw new Exception(
+                'your map ' . basename($file) . ' is badly formed',
+                400
+            );
+        }
+    }
+
+    private function copyList(array $files, string $targetFolder): void
     {
         foreach ($files as $file) {
-            Storage::copy($file, $targetFolder.'/Maps/'.basename($file));
+            Storage::copy($file, "{$targetFolder}/Maps/" . basename($file));
         }
     }
 }

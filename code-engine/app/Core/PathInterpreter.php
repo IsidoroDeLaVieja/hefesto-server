@@ -4,50 +4,76 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class PathInterpreter {
-
+class PathInterpreter
+{
     private const VERB_MIDDLEWARE = 'ALL';
     private const PATH_MIDDLEWARE = '/requests';
 
-    public function execute(string $requestVerb, string $requestPath, array $definitionActions) : ?array 
+    public function execute(string $requestVerb, string $requestPath, array $definitionActions): ?array
     {
-        $requestPathParams = explode('/',$requestPath);
-        $countRequestPathParams = count($requestPathParams);
-        if ($countRequestPathParams === 1 && $requestPathParams[0] === '') {
+        if ($requestPath === '') {
             return null;
         }
 
-        foreach($definitionActions as $action) {
-
+        foreach ($definitionActions as $action) {
             $definitionVerb = $action[0];
             $definitionPath = $action[1];
 
-            if (self::VERB_MIDDLEWARE === $definitionVerb && self::PATH_MIDDLEWARE === $definitionPath) {
-                return $this->buildResponse(self::VERB_MIDDLEWARE,self::PATH_MIDDLEWARE,[]);
+            if ($this->matchesMiddleware($definitionVerb, $definitionPath)) {
+                return $this->buildResponse(self::VERB_MIDDLEWARE, self::PATH_MIDDLEWARE, []);
             }
+
             if ($requestVerb !== $definitionVerb) {
                 continue;
             }
+
             if ($requestPath === $definitionPath) {
-                return $this->buildResponse($definitionVerb,$definitionPath,[]);
+                return $this->buildResponse($definitionVerb, $definitionPath, []);
             }
-            $definitionPathParams = explode('/',$definitionPath);
-            if ($countRequestPathParams !== count($definitionPathParams)) {
+
+            $definitionParts = explode('/', $definitionPath);
+            $requestParts = explode('/', $requestPath);
+
+            if (count($definitionParts) !== count($requestParts)) {
                 continue;
             }
-            $pathParams = $this->getPathParams(
-                $definitionPathParams,
-                $requestPathParams
-            );
-            if (empty($pathParams)) {
-                continue;
+
+            $pathParams = $this->extractPathParams($definitionParts, $requestParts);
+
+            if ($pathParams !== []) {
+                return $this->buildResponse($definitionVerb, $definitionPath, $pathParams);
             }
-            return $this->buildResponse($definitionVerb,$definitionPath,$pathParams);
         }
+
         return null;
     }
 
-    private function buildResponse(string $definitionVerb, string $definitionPath, array $pathParams) : array 
+    /**
+     * @return array<string, string>
+     */
+    private function extractPathParams(array $definitionParts, array $requestParts): array
+    {
+        $params = [];
+
+        foreach ($definitionParts as $i => $definitionPart) {
+            if ($definitionPart === $requestParts[$i]) {
+                continue;
+            }
+
+            if (!$this->isParam($definitionPart)) {
+                return [];
+            }
+
+            $params[trim($definitionPart, '{}')] = $requestParts[$i];
+        }
+
+        return $params;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildResponse(string $definitionVerb, string $definitionPath, array $pathParams): array
     {
         return [
             'DEFINITION_VERB' => $definitionVerb,
@@ -56,29 +82,15 @@ class PathInterpreter {
         ];
     }
 
-    private function getPathParams(
-        array $definitionPathParams,
-        array $requestPathParams
-    ) : array {
-        $pathParams = [];
-        foreach($definitionPathParams as $i => $definitionPathParam) {
-            if ($definitionPathParam === $requestPathParams[$i]) {
-                continue;
-            }
-            if ( !$this->isParam($definitionPathParam) ) {
-                return [];
-            }
-            $pathParams[trim($definitionPathParam,'{}')] = $requestPathParams[$i];
-        }
-        return $pathParams;
+    private function matchesMiddleware(string $verb, string $path): bool
+    {
+        return $verb === self::VERB_MIDDLEWARE && $path === self::PATH_MIDDLEWARE;
     }
 
-    private function isParam(string $definitionPathParam) : bool 
+    private function isParam(string $definitionPathParam): bool
     {
-        if (empty($definitionPathParam)) {
-            return false;
-        }
-        $chars = str_split($definitionPathParam);
-        return  $chars[0] === '{' && $chars[count($chars) - 1] === '}';
+        return $definitionPathParam !== ''
+            && $definitionPathParam[0] === '{'
+            && $definitionPathParam[-1] === '}';
     }
 }

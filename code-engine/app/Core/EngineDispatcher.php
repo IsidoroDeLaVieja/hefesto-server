@@ -3,38 +3,34 @@
 declare(strict_types=1);
 
 namespace App\Core;
+
 use SplDoublyLinkedList;
 
-class EngineDispatcher {
+class EngineDispatcher
+{
+    public function __construct(
+        private readonly SenderEngineDispatcher $dispatcher,
+        private readonly EngineFactory $engineFactory,
+    ) {}
 
-    private $dispatcher;
-    private $engineFactory;
-
-    public function __construct(SenderEngineDispatcher $dispatcher, EngineFactory $engineFactory) 
+    public function send(Engine $engine, int $oldOrder, int $delay): void
     {
-        $this->dispatcher = $dispatcher;
-        $this->engineFactory = $engineFactory;
-    }
-
-    public function send(Engine $engine, int $oldOrder, int $delay) : void 
-    {
-        $oldDirectives = $engine->directives();
-        $oldDirectives->rewind();
+        $sourceDirectives = $engine->directives();
+        $sourceDirectives->rewind();
         $state = $engine->state();
 
-        $newDirectives = new SplDoublyLinkedList();
-        $newOrder = 1;
-        while( $oldDirectives->valid() ) {
-            if ( $newOrder > $oldOrder ) {
-                $newDirectives->push(
-                    $oldDirectives->current()
-                );
+        $remainingDirectives = new SplDoublyLinkedList();
+        $index = 1;
+
+        while ($sourceDirectives->valid()) {
+            if ($index > $oldOrder) {
+                $remainingDirectives->push($sourceDirectives->current());
             }
-            $oldDirectives->next();
-            $newOrder++;
+            $sourceDirectives->next();
+            $index++;
         }
 
-        $engineToDispatch = $this->engineFactory->make($state, $newDirectives, $this);
+        $engineToDispatch = $this->engineFactory->make($state, $remainingDirectives, $this);
         $this->dispatcher->execute($engineToDispatch, $delay);
     }
 }

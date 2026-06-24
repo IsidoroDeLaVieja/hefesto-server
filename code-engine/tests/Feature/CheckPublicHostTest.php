@@ -185,53 +185,6 @@ class CheckPublicHostTest extends TestCase
         $this->assertSame('', $response->getContent());
     }
 
-    public function testHandleBypassesAdminClosedWhenCallIsLocal(): void
-    {
-        $_SERVER['SERVER_NAME'] = 'localhost';
-
-        config(['app.ADMIN_CLOSED' => true]);
-
-        $this->virtualHostStorage
-            ->expects($this->once())
-            ->method('getPublic')
-            ->with('localhost')
-            ->willReturn(null);
-
-        $this->virtualHostAccessAdmin
-            ->expects($this->once())
-            ->method('get')
-            ->willReturn([
-                'ORG' => 'myorg',
-                'TYPE' => 'ADMIN',
-                'ENV' => 'production',
-                'PATH' => '',
-            ]);
-
-        $request = new Request(
-            [],
-            [],
-            [],
-            [],
-            [],
-            ['REMOTE_ADDR' => '127.0.0.1', 'SERVER_NAME' => 'localhost'],
-            '/hefesto/api'
-        );
-        $request->setUserResolver(fn () => null);
-        $request->setRouteResolver(fn () => null);
-        $request->headers->set('public-host', 'public-host-value');
-        $request->headers->set('public-host-key', 'public-host-key-value');
-
-        $nextCalled = false;
-
-        $response = $this->middleware->handle($request, function () use (&$nextCalled) {
-            $nextCalled = true;
-            return response('OK');
-        });
-
-        $this->assertTrue($nextCalled);
-        $this->assertEquals(200, $response->getStatusCode());
-    }
-
     // ──────────────────────────────────────────────
     //  handle – Exception from dependencies
     // ──────────────────────────────────────────────

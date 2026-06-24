@@ -1,84 +1,78 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
-class Alias 
+class Alias
 {
-    private $state;
+    public function __construct(
+        private readonly State $state
+    ) {}
 
-    public function __construct(State $state) 
+    public function find(mixed $key): mixed
     {
-        $this->state = $state;
-    }
-
-    public function find($key)
-    {
-        if ( !is_string($key) ) {
-            return $key;
-        }
-        $firstTwoCharacters = substr($key,0,2);
-        if ($firstTwoCharacters !== '$.') {
+        if (!is_string($key) || !str_starts_with($key, '$.')) {
             return $key;
         }
 
-        $keyParts = explode('.',$key);
-        $stateMethod = $keyParts[1];//message, memory ,map or id
+        $keyParts = explode('.', $key);
+        $stateMethod = $keyParts[1];
+
         if ($stateMethod === 'id') {
             return $this->state->id();
         }
-        list($object, $action, $arguments, $keys) = $this->$stateMethod($keyParts);
 
-        $value = call_user_func_array( [ $object, $action], $arguments);
-        if (!$keys) {
-            return $value;
-        }
-        return $this->recursiveValue($value, $keys);
+        [$object, $action, $arguments, $keys] = $this->$stateMethod($keyParts);
+        $value = call_user_func_array([$object, $action], $arguments);
+
+        return $keys ? $this->recursiveValue($value, $keys) : $value;
     }
 
-    private function recursiveValue(array $collection, array $keys) 
+    private function recursiveValue(array $collection, array $keys): mixed
     {
         foreach ($keys as $key) {
             $collection = $collection[$key];
         }
+
         return $collection;
     }
 
-    private function message(array $keyParts) : array 
+    private function message(array $keyParts): array
     {
-        $object = $this->state->message();
-        $action = 'get'.ucfirst($keyParts[2]);
-        $arguments = array_slice($keyParts, 3, 4);
-        $keys = false;
-        return [$object, $action, $arguments, $keys];
+        $action = 'get' . ucfirst($keyParts[2]);
+
+        return [
+            $this->state->message(),
+            $action,
+            array_slice($keyParts, 3, 4),
+            false,
+        ];
     }
 
-    private function memory(array $keyParts, ?object $object = null) : array 
+    private function memory(array $keyParts): array
     {
-        $object =  is_null($object) ? $this->state->memory(): $object;
-        $action = 'get';
-        $arguments = array_slice($keyParts, 2, 3);
-        $keys = count($keyParts) > 3 
-                    ? array_slice($keyParts, 3)
-                    : false;
-        return [$object, $action, $arguments, $keys];
+        return [
+            $this->state->memory(),
+            'get',
+            array_slice($keyParts, 2, 3),
+            count($keyParts) > 3 ? array_slice($keyParts, 3) : false,
+        ];
     }
 
-    private function map(array $keyParts) : array 
+    private function map(array $keyParts): array
     {
-        $object =  $this->state->map($keyParts[2]);
-        
-        $action = 'read';
-        $arguments = [];
-        $keys = false;
-        if ( ! isset($keyParts[3]) ) {
-            return [$object, $action, $arguments, $keys];
+        $object = $this->state->map($keyParts[2]);
+
+        if (!isset($keyParts[3])) {
+            return [$object, 'read', [], false];
         }
-        
-        $action = 'get';
-        $arguments = array_slice($keyParts, 3, 4);
-        $keys = count($keyParts) > 4 
-                ? array_slice($keyParts, 4)
-                : false;
-        return [$object, $action, $arguments, $keys];
+
+        return [
+            $object,
+            'get',
+            array_slice($keyParts, 3, 4),
+            count($keyParts) > 4 ? array_slice($keyParts, 4) : false,
+        ];
     }
 }

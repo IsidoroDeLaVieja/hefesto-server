@@ -1,64 +1,58 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
+use App\Core\ApiStorage;
 use Closure;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Core\ApiStorage;
 use Throwable;
-use Exception;
 
 class CheckApi
 {
-    private $apiStorage;
-    private $isAdmin;
-
     public function __construct(
-        ApiStorage $apiStorage
-    ) {
-        $this->apiStorage = $apiStorage;
-    }
+        private readonly ApiStorage $apiStorage
+    ) {}
 
-    public function handle(
-        Request $request, 
-        Closure $next
-    ) {
+    public function handle(Request $request, Closure $next): mixed
+    {
         try {
-            $this->isAdmin = $request->virtualHost['TYPE'] === 'ADMIN';
-            $api = $this->getApi($request);
-            if (        !$api 
-                    ||  !$api['active']
-                    ||  (!$this->isAdmin && !$api['public'] ) 
-            ) {
+            $isAdmin = $request->virtualHost['TYPE'] === 'ADMIN';
+            $api = $this->apiStorage->find(
+                $request->virtualHost['ORG'],
+                $request->virtualHost['ENV'],
+                $this->resolveKey($request, $isAdmin),
+            );
+
+            if ($api === null || !$api['active'] || (!$isAdmin && !$api['public'])) {
                 throw new Exception('Api not found');
             }
+
             $request->api = $api;
         } catch (Throwable $e) {
-            Log::alert('CheckApi '.$request->ip().' '.$e->getMessage());
-            return response('',404);
+            Log::alert('CheckApi ' . $request->ip() . ' ' . $e->getMessage());
+
+            return response('', 404);
         }
+
         return $next($request);
     }
 
-    private function getApi(Request $request) : ?array
+    private function resolveKey(Request $request, bool $isAdmin): string
     {
-        return $this->apiStorage->find(
-            $request->virtualHost['ORG'],
-            $request->virtualHost['ENV'],
-            $this->getKey($request)
-        );
-    }
+        $basePath = (!$isAdmin && $request->virtualHost['PATH'])
+            ? $request->virtualHost['PATH']
+            : '/' . $request->path();
 
-    private function getKey(Request $request) : string 
-    {
-        $path = !$this->isAdmin && $request->virtualHost['PATH'] 
-            ? $request->virtualHost['PATH'] 
-            : '/'.$request->path();
-        $segments = explode('/',$path);
-        if (isset($segments[1])) {
+        $segments = explode('/', $basePath);
+
+        if (isset($segments[1]) && $segments[1] !== '') {
             return $segments[1];
         }
+
         throw new Exception('Key not found');
     }
 }

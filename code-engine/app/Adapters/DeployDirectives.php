@@ -3,53 +3,85 @@
 declare(strict_types=1);
 
 namespace App\Adapters;
+
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Exception;
 use App\Adapters\Contracts\DeployDirectivesInterface;
 
-class DeployDirectives implements DeployDirectivesInterface {
+class DeployDirectives implements DeployDirectivesInterface
+{
+    private const DIRECTIVES_DIR = '/Directives';
+    private const REQUIRED_HEADER = '<?php /*dlv-code-engine***/';
+    private const HEADER_LENGTH = 27;
 
-    public function execute(        
+    public function execute(
         string $sourceFolder,
         string $targetFolder,
         string $release
-    ) : void {
+    ): void {
         self::staticExecute($sourceFolder, $targetFolder, $release);
     }
 
-    public static function staticExecute(        
+    public static function staticExecute(
         string $sourceFolder,
         string $targetFolder,
         string $release
-    ) : void {
-        $files = Storage::files($sourceFolder.'/Directives');
+    ): void {
+        $files = self::collectFiles($sourceFolder . self::DIRECTIVES_DIR);
         self::validateList($files);
-        self::compileList($files,$release,$targetFolder,config('app.API_NAMESPACE'));
+        self::compileList($files, $release, $targetFolder, config('app.API_NAMESPACE'));
 
-        $compiledFiles = Storage::files($targetFolder.'/Directives');
+        $compiledFiles = self::collectFiles($targetFolder . self::DIRECTIVES_DIR);
         self::validateList($compiledFiles);
     }
 
-    private static function validateList(array $files) : void 
+    private static function collectFiles(string $directory): array
+    {
+        return Storage::files($directory);
+    }
+
+    private static function validateList(array $files): void
     {
         if (count($files) < 1) {
             throw new Exception('0 directives in your api', 400);
         }
+
         foreach ($files as $file) {
-            $code = Storage::get($file);
-            $header = substr($code, 0, 27);
-            if ($header !== '<?php /*dlv-code-engine***/') {
-                throw new Exception('Directive '.basename($file).' should have <?php /*dlv-code-engine***/', 400);
-            }
-            $extension =  substr($file, -4);
-            if ($extension !== '.php') {
-                throw new Exception('your directive '.basename($file).' has no php extension', 400);
-            }
-            $checkSyntax = trim(exec('php -l '.Storage::path($file)));
-            if ( ! Str::startsWith($checkSyntax, 'No syntax errors detected') ) {
-                throw new Exception($checkSyntax,400);
-            }
+            self::validateHeader($file);
+            self::validateExtension($file);
+            self::validateSyntax($file);
+        }
+    }
+
+    private static function validateHeader(string $file): void
+    {
+        $code = Storage::get($file);
+        $header = substr($code, 0, self::HEADER_LENGTH);
+
+        if ($header !== self::REQUIRED_HEADER) {
+            throw new Exception(
+                'Directive ' . basename($file) . ' should have ' . self::REQUIRED_HEADER,
+                400
+            );
+        }
+    }
+
+    private static function validateExtension(string $file): void
+    {
+        if (!str_ends_with($file, '.php')) {
+            throw new Exception(
+                'your directive ' . basename($file) . ' has no php extension',
+                400
+            );
+        }
+    }
+
+    private static function validateSyntax(string $file): void
+    {
+        $checkSyntax = trim(exec('php -l ' . Storage::path($file)));
+
+        if (!str_starts_with($checkSyntax, 'No syntax errors detected')) {
+            throw new Exception($checkSyntax, 400);
         }
     }
 
@@ -58,21 +90,13 @@ class DeployDirectives implements DeployDirectivesInterface {
         string $release,
         string $targetFolder,
         string $apiNamespace
-    ) : void {
+    ): void {
         foreach ($files as $file) {
             $code = Storage::get($file);
-            $code = Str::replaceFirst(
-                '<?php /*dlv-code-engine***/', 
-                '', 
-                $code
-            );
-            $directive = Str::replaceLast(
-                '.php', 
-                '', 
-                basename($file)
-            );
-            $template = self::template($release,$directive,$code,$apiNamespace);
-            Storage::put($targetFolder.'/Directives/'.basename($file),$template );
+            $code = str_replace(self::REQUIRED_HEADER, '', $code);
+            $directive = basename($file, '.php');
+            $template = self::template($release, $directive, $code, $apiNamespace);
+            Storage::put($targetFolder . self::DIRECTIVES_DIR . '/' . basename($file), $template);
         }
     }
 
@@ -81,8 +105,8 @@ class DeployDirectives implements DeployDirectivesInterface {
         string $directive,
         string $code,
         string $apiNamespace
-    ) : string {
-        $template =  '<?php /*dlv-code-engine***/
+    ): string {
+        $template = '<?php /*dlv-code-engine***/
         declare(strict_types=1);
 
         namespace #apiNamespace##release#\Directives;
@@ -98,9 +122,11 @@ class DeployDirectives implements DeployDirectivesInterface {
             }
         }
         ';
-        $template = str_replace('#apiNamespace#',$apiNamespace,$template);
-        $template = str_replace('#release#',$release,$template);
-        $template = str_replace('#directive#',$directive,$template);
-        return str_replace('#code#',$code,$template);
+
+        return str_replace(
+            ['#apiNamespace#', '#release#', '#directive#', '#code#'],
+            [$apiNamespace, $release, $directive, $code],
+            $template
+        );
     }
 }

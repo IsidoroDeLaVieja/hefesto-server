@@ -6,12 +6,9 @@ namespace App\Core;
 
 class FilesystemMapRepository implements MapRepositoryInterface
 {
-    private string $basePath;
-
-    public function __construct(string $basePath)
-    {
-        $this->basePath = $basePath;
-    }
+    public function __construct(
+        private readonly string $basePath
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -30,6 +27,7 @@ class FilesystemMapRepository implements MapRepositoryInterface
             return [];
         }
 
+        /** @var array<string, mixed>|false $decoded */
         $decoded = json_decode($contents, true);
 
         return is_array($decoded) ? $decoded : [];

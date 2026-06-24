@@ -3,87 +3,82 @@
 declare(strict_types=1);
 
 namespace App\Core;
-use Exception;
 
-class VirtualHostStorage {
-
+class VirtualHostStorage
+{
     private const KEY_VIRTUAL_HOSTS = 'HEFESTO_VIRTUAL_HOSTS';
     private const ID_PUBLIC = 'PUBLIC';
     private const ID_ADMIN = 'ADMIN';
-    private $memory;
-    private $virtualHosts;
 
-    public function __construct(Memory $memory) 
-    {
-        $this->memory = $memory;
-        
-        $virtualHosts = $this->memory->get(self::KEY_VIRTUAL_HOSTS);
-        $this->virtualHosts = $virtualHosts ? $virtualHosts : [];
+    private array $virtualHosts;
+
+    public function __construct(
+        private readonly Memory $memory
+    ) {
+        $stored = $this->memory->get(self::KEY_VIRTUAL_HOSTS);
+        $this->virtualHosts = is_array($stored) ? $stored : [];
     }
 
-    public function setAdmin(string $host) : void 
+    public function setAdmin(string $host): void
     {
-        if ( $this->getPublic($host) ) {
-            throw new Exception("can't add host, it's public");
+        if ($this->getPublic($host) !== null) {
+            throw new \Exception("can't add host, it's public");
         }
-        $this->set($host,[
+
+        $this->set($host, [
             'ORG' => $host,
-            'TYPE' => self::ID_ADMIN
+            'TYPE' => self::ID_ADMIN,
         ]);
     }
 
-    public function setPublic(
-        string $host,string $key,string $env,string $path
-    ) : void {
-        if ( $this->getAdmin($host) ) {
-            throw new Exception("can't add host, it's admin");
+    public function setPublic(string $host, string $key, string $env, string $path): void
+    {
+        if ($this->getAdmin($host) !== null) {
+            throw new \Exception("can't add host, it's admin");
         }
-        $this->set($host,[
+
+        $this->set($host, [
             'ORG' => $host,
             'TYPE' => self::ID_PUBLIC,
             'KEY' => $key,
             'ENV' => $env,
-            'PATH' => $path
+            'PATH' => $path,
         ]);
     }
 
-    public function delete(string $host) : void 
+    public function delete(string $host): void
     {
-        if (isset($this->virtualHosts[$host])) {
-            unset($this->virtualHosts[$host]);
-        }
-        $this->memory->set(self::KEY_VIRTUAL_HOSTS,$this->virtualHosts);
+        unset($this->virtualHosts[$host]);
+        $this->memory->set(self::KEY_VIRTUAL_HOSTS, $this->virtualHosts);
     }
 
-    public function getAdmin(string $host) : ?array 
+    public function getAdmin(string $host): ?array
     {
-        return $this->get($host,self::ID_ADMIN);
+        return $this->get($host, self::ID_ADMIN);
     }
 
-    public function getPublic(string $host) : ?array 
+    public function getPublic(string $host): ?array
     {
-        return $this->get($host,self::ID_PUBLIC);
+        return $this->get($host, self::ID_PUBLIC);
     }
 
-    public function read() : array 
+    public function read(): array
     {
         return array_keys($this->virtualHosts);
     }
 
-    private function set(string $key,array $value) : void 
+    private function set(string $key, array $value): void
     {
         $this->virtualHosts[$key] = $value;
-        $this->memory->set(self::KEY_VIRTUAL_HOSTS,$this->virtualHosts);
+        $this->memory->set(self::KEY_VIRTUAL_HOSTS, $this->virtualHosts);
     }
 
-    private function get(string $host,string $type) : ?array 
+    private function get(string $host, string $type): ?array
     {
-        if ( isset($this->virtualHosts[$host]) 
-            && $this->virtualHosts[$host]['TYPE'] === $type
-        ) {
+        if (isset($this->virtualHosts[$host]) && $this->virtualHosts[$host]['TYPE'] === $type) {
             return $this->virtualHosts[$host];
         }
+
         return null;
     }
-    
 }

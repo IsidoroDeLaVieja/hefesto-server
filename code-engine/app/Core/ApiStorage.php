@@ -3,82 +3,100 @@
 declare(strict_types=1);
 
 namespace App\Core;
-use DateTime;
 
-class ApiStorage {
+use DateTimeImmutable;
 
+class ApiStorage
+{
     private const MAX_RELEASES = 7;
-    private $memory;
 
-    public function __construct(Memory $memory) {
-        $this->memory = $memory;
-    }
+    public function __construct(
+        private readonly Memory $memory
+    ) {}
 
     public function set(
         string $org,
-        string $env, 
-        string $keyApi, 
-        string $release, 
-        bool $active, 
+        string $env,
+        string $keyApi,
+        string $release,
+        bool $active,
         bool $public
-    ) : array 
-    {
-        $releases = [];
-        $createdAt = date(DateTime::ISO8601);
+    ): array {
+        $now = new DateTimeImmutable();
+        $createdAt = $now->format(DateTimeImmutable::ATOM);
 
-        $api = $this->find($org,$env,$keyApi);
-        if ($api && $api['release'] !== $release) {
-            $releases = array_diff($api['releases'],[$release]);
-            $releases[] = $api['release'];
-        }
-        if ($api) {
-            $createdAt = $api['created_at'];
+        $existingApi = $this->find($org, $env, $keyApi);
+
+        $previousReleases = $this->resolvePreviousReleases($existingApi, $release);
+
+        if ($existingApi !== null) {
+            $createdAt = $existingApi['created_at'];
         }
 
-        $oldReleases = $releases;
-        $releases = $this->cleanReleases($releases);
-
-        $api = [
-            'key' => $keyApi,
-            'release' => $release,
-            'active' => $active,
-            'public' => $public,
-            'created_at' => $createdAt,
-            'updated_at' => date(DateTime::ISO8601),
-            'releases' => $releases
-        ];
+        $cleanedReleases = $this->cleanReleases($previousReleases);
 
         $this->memory->set(
             "org-$org-env-$env-key-$keyApi",
-            $api
+            [
+                'key' => $keyApi,
+                'release' => $release,
+                'active' => $active,
+                'public' => $public,
+                'created_at' => $createdAt,
+                'updated_at' => $now->format(DateTimeImmutable::ATOM),
+                'releases' => $cleanedReleases,
+            ]
         );
 
-        return array_diff($oldReleases,$releases);
+        return array_diff($previousReleases, $cleanedReleases);
     }
 
-    public function find(string $org,string $env, string $keyApi) : ?array 
+    public function find(string $org, string $env, string $keyApi): ?array
     {
         return $this->memory->get("org-$org-env-$env-key-$keyApi");
     }
 
-    public function findAll(string $org,string $env) : array 
+    public function findAll(string $org, string $env): array
     {
-        $allApis = $this->memory->read();
-        $filter = [];
-        foreach ($allApis as $api) {
-            if (strpos(basename($api), "org-$org-env-$env-key-") === 0) {
-                $filter[] = str_replace("org-$org-env-$env-key-",'',basename($api));
+        $prefix = "org-$org-env-$env-key-";
+        $result = [];
+
+        foreach ($this->memory->read() as $path) {
+            $key = basename((string) $path);
+            if (str_starts_with($key, $prefix)) {
+                $result[] = substr($key, strlen($prefix));
             }
         }
-        return $filter;
+
+        return $result;
     }
 
-    private function cleanReleases(array $releases) : array 
+    /**
+     * @param array<string, mixed>|null $existingApi
+     * @return string[]
+     */
+    private function resolvePreviousReleases(?array $existingApi, string $newRelease): array
     {
-        if ( count($releases) <= self::MAX_RELEASES) {
+        if ($existingApi === null || $existingApi['release'] === $newRelease) {
+            return [];
+        }
+
+        $releases = array_diff($existingApi['releases'], [$newRelease]);
+        $releases[] = $existingApi['release'];
+
+        return array_values($releases);
+    }
+
+    /**
+     * @param string[] $releases
+     * @return string[]
+     */
+    private function cleanReleases(array $releases): array
+    {
+        if (count($releases) <= self::MAX_RELEASES) {
             return $releases;
         }
+
         return array_slice($releases, -self::MAX_RELEASES);
     }
-    
 }

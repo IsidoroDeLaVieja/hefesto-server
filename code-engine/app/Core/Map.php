@@ -4,24 +4,18 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class Map {
+class Map
+{
+    public function __construct(
+        private readonly array $storage = []
+    ) {}
 
-    private $storage;
-    
-    public function __construct(array $storage = [])
+    public function get(string $key): mixed
     {
-        $this->storage = $storage;
+        return $this->storage[$key] ?? null;
     }
 
-    public function get(string $key) 
-    {
-        if ( ! isset($this->storage[$key]) ) {
-            return null;
-        }
-        return $this->storage[$key];
-    }
-
-    public function read() 
+    public function read(): array
     {
         return $this->storage;
     }

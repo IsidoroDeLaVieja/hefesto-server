@@ -4,40 +4,25 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class State {
-
-    private $id;
-    private $message;
-    private $memory;
-    private $groups;
-    private $isDirectiveDebug;
-    private $debug;
-    private $maps;
-    private $alias;
-    private $apiMemory;
-    private $isQueued;
-    private $mapRepository;
+class State
+{
+    private bool $isDirectiveDebug = false;
+    private bool $isQueued = false;
+    private string $id;
+    private ?Memory $apiMemory = null;
+    private ?array $maps = null;
+    private Alias $alias;
+    private array $debug = [];
 
     public function __construct(
-        Message $message,
+        private readonly Message $message,
         array $config,
-        ?Groups $groups = null,
-        ?Memory $memory = null,
-        ?MapRepositoryInterface $mapRepository = null
+        private readonly Groups $groups = new Groups(),
+        private readonly Memory $memory = new ExecutionTimeMemory(),
+        private readonly MapRepositoryInterface $mapRepository = new FilesystemMapRepository(''),
     ) {
-        $this->groups = $groups ?? new Groups();
-        $this->memory = $memory ?? new ExecutionTimeMemory();
-        $this->mapRepository = $mapRepository ?? new FilesystemMapRepository(
-            isset($config['codePath']) ? $config['codePath'] : ''
-        );
-        $this->message = $message;
-        $this->isDirectiveDebug = false;
-        $this->id = isset($config['id']) ? $config['id'] : uniqid('',true);
+        $this->id = $config['id'] ?? uniqid('', true);
         $this->apiMemory = $config['apiMemory'] ?? null;
-        $this->resetDebug();
-        $apiMaps = $this->apiMemory ? $this->apiMemory->get('api-maps') : null;
-        $this->maps = $apiMaps ? (array)$apiMaps : null;
-        $this->isQueued = false;
 
         $this->memory->set('hefesto-org', $config['organization']);
         $this->memory->set('hefesto-env', $config['environment']);
@@ -47,6 +32,9 @@ class State {
         $this->memory->set('hefesto-pathstorage', $config['storagePath']);
         $this->memory->set('hefesto-definitionpath', $config['definitionPath']);
         $this->memory->set('hefesto-definitionverb', $config['definitionVerb']);
+
+        $apiMaps = $this->apiMemory?->get('api-maps');
+        $this->maps = $apiMaps !== null ? (array) $apiMaps : null;
 
         $this->alias = new Alias($this);
     }
@@ -81,16 +69,15 @@ class State {
         if (!isset($this->maps[$key])) {
             $storage = $this->mapRepository->load($key);
             $this->maps[$key] = new Map($storage);
-            if ($this->apiMemory) {
-                $this->apiMemory->set('api-maps', $this->maps);
-            }
+            $this->apiMemory?->set('api-maps', $this->maps);
         }
+
         return $this->maps[$key];
     }
 
-    public function alias($key)
+    public function alias(mixed $key): mixed
     {
-        return $this->alias ? $this->alias->find($key) : $key;
+        return $this->alias->find($key);
     }
 
     public function queue(): void
@@ -120,7 +107,7 @@ class State {
 
     public function addDebug(array $log): void
     {
-        array_push($this->debug, $log);
+        $this->debug[] = $log;
     }
 
     public function resetDebug(): void

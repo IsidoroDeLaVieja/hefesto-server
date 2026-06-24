@@ -4,22 +4,12 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class DirectiveRequest {
-
-    public $id;
-    public $name;
-    public $config;
-    public $groups;
-
+class DirectiveRequest
+{
     public function __construct(
-        string $id,
-        string $name, 
-        array $config, 
-        ?array $groups = null
-    ) {
-        $this->id = $id;
-        $this->name = $name;
-        $this->config = $config;
-        $this->groups = $groups;
-    }
+        public readonly string $id,
+        public readonly string $name,
+        public readonly array $config,
+        public readonly ?array $groups = null,
+    ) {}
 }

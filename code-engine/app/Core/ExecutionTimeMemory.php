@@ -4,25 +4,21 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class ExecutionTimeMemory implements Memory {
+class ExecutionTimeMemory implements Memory
+{
+    private array $storage = [];
 
-    private $storage = [];
-    
-    public function get(string $key)
+    public function get(string $key): mixed
     {
-        $upperKey = strtoupper($key);
-        if ( ! isset($this->storage[$upperKey]) ) {
-            return null;
-        }
-        return $this->storage[$upperKey];
+        return $this->storage[strtoupper($key)] ?? null;
     }
 
-    public function set(string $key,$value) : void
+    public function set(string $key, mixed $value): void
     {
         $this->storage[strtoupper($key)] = $value;
     }
 
-    public function read() : array 
+    public function read(): array
     {
         return $this->storage;
     }
