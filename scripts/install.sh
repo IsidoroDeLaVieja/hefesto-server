@@ -18,8 +18,8 @@ cp "$CODE_DIR/.env.example" "$CODE_DIR/.env"
 # Use envsubst to replace placeholders in laradock .env (more robust than sed)
 export DATA_PATH_HOST UID_VAR="$UID"
 sed "
-  s/#DATA_PATH_HOST#/$DATA_PATH_HOST/g
-  s/#UID#/$UID/g
+  s|#DATA_PATH_HOST#|$DATA_PATH_HOST|g
+  s|#UID#|$UID|g
 " "$LARADOCK_DIR/env-example" > "$LARADOCK_DIR/.env"
 
 # ── Start services ───────────────────────────────────────────────────────────
@@ -29,10 +29,17 @@ compose_run up -d php-fpm nginx redis php-worker postgres
 # ── Wait for postgres to be healthy ──────────────────────────────────────────
 
 echo "Waiting for postgres to be ready..."
-if ! compose_run exec -T postgres pg_isready -U postgres --timeout=30 2>/dev/null; then
-    echo "ERROR: postgres did not become ready in time." >&2
-    exit 1
-fi
+MAX_RETRIES=30
+RETRY_INTERVAL=2
+RETRIES=0
+until compose_run exec -T postgres pg_isready -U postgres 2>/dev/null; do
+    RETRIES=$((RETRIES + 1))
+    if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
+        echo "ERROR: postgres did not become ready in time (after $((MAX_RETRIES * RETRY_INTERVAL)) seconds)." >&2
+        exit 1
+    fi
+    sleep "$RETRY_INTERVAL"
+done
 echo "✓ postgres is ready"
 
 # ── Install Composer (if not already installed) ──────────────────────────────
