@@ -1,16 +1,19 @@
 #!/bin/bash
 
 set -e
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/functions.sh
+
+# shellcheck source=./functions.sh
+source "$SCRIPT_DIR/functions.sh"
 
 VIRTUAL_HOST=$1
 GENERATE_CERT=$2
-SOURCE=$SCRIPT_DIR/..
 
-param_or_die "The format is virtualhost-admin-set.sh virtualhost generatecert" $VIRTUAL_HOST 
+param_or_die "Usage: virtualhost-admin-set.sh <virtualhost> [generatecert]" "$VIRTUAL_HOST"
 
-docker exec --user www-data hefesto-php-fpm-1 php /var/www/artisan set:virtualhost:admin $VIRTUAL_HOST
-generate_nginx_virtualhost $SOURCE $VIRTUAL_HOST $GENERATE_CERT
+compose_exec php-fpm php /var/www/artisan set:virtualhost:admin "$VIRTUAL_HOST"
+generate_nginx_virtualhost "$PROJECT_ROOT" "$VIRTUAL_HOST" "$GENERATE_CERT"
 
-echo 'ADMIN '$VIRTUAL_HOST' SAVED'
+echo "✓ Admin '$VIRTUAL_HOST' saved"
+echo "✅ All done"

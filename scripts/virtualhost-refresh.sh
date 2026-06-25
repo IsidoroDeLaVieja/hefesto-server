@@ -1,24 +1,34 @@
 #!/bin/bash
 
 set -e
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/functions.sh
+
+# shellcheck source=./functions.sh
+source "$SCRIPT_DIR/functions.sh"
 
 GENERATE_CERT=$1
-SOURCE=$SCRIPT_DIR/..
+NGINX_SITES_DIR="$PROJECT_ROOT/laradock/nginx/sites"
 
-HOSTS=$(docker exec --user www-data hefesto-php-fpm-1 php /var/www/artisan read:virtualhost)
+# ── Read current virtual hosts from artisan ──────────────────────────────────
 
-mv $SOURCE/laradock/nginx/sites/capture-trash.conf $SOURCE/laradock/nginx/sites/capture-trash.conf.bck
-mv $SOURCE/laradock/nginx/sites/localhost.conf $SOURCE/laradock/nginx/sites/localhost.conf.bck
-rm $SOURCE/laradock/nginx/sites/*.conf
-mv $SOURCE/laradock/nginx/sites/capture-trash.conf.bck $SOURCE/laradock/nginx/sites/capture-trash.conf
-mv $SOURCE/laradock/nginx/sites/localhost.conf.bck $SOURCE/laradock/nginx/sites/localhost.conf
+HOSTS=$(compose_exec php-fpm php /var/www/artisan read:virtualhost)
 
-for i in $HOSTS ; do
+# ── Backup and clean nginx sites ─────────────────────────────────────────────
+
+mv "$NGINX_SITES_DIR/capture-trash.conf" "$NGINX_SITES_DIR/capture-trash.conf.bck" 2>/dev/null || true
+mv "$NGINX_SITES_DIR/localhost.conf" "$NGINX_SITES_DIR/localhost.conf.bck" 2>/dev/null || true
+rm -f "$NGINX_SITES_DIR"/*.conf
+mv "$NGINX_SITES_DIR/capture-trash.conf.bck" "$NGINX_SITES_DIR/capture-trash.conf" 2>/dev/null || true
+mv "$NGINX_SITES_DIR/localhost.conf.bck" "$NGINX_SITES_DIR/localhost.conf" 2>/dev/null || true
+
+# ── Regenerate nginx configs ─────────────────────────────────────────────────
+
+for i in $HOSTS; do
     if [ "$i" != "localhost" ]; then
-        generate_nginx_virtualhost $SOURCE $i $GENERATE_CERT
+        generate_nginx_virtualhost "$PROJECT_ROOT" "$i" "$GENERATE_CERT"
     fi
-done;
+done
 
-echo 'DONE'
+echo "✓ Virtualhosts refreshed"
+echo "✅ All done"

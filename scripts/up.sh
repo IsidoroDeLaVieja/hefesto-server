@@ -1,6 +1,12 @@
 #!/bin/bash
 
 set -e
-docker start hefesto-redis-1 hefesto-postgres-1 hefesto-php-worker-1 hefesto-php-fpm-1 hefesto-nginx-1
 
-echo 'DONE'
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# shellcheck source=./functions.sh
+source "$SCRIPT_DIR/functions.sh"
+
+compose_run start
+
+echo "✅ All done"

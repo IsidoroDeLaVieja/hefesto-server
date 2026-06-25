@@ -1,15 +1,18 @@
 #!/bin/bash
 
 set -e
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/functions.sh
+
+# shellcheck source=./functions.sh
+source "$SCRIPT_DIR/functions.sh"
 
 VIRTUAL_HOST=$1
-SOURCE=$SCRIPT_DIR/..
 
-param_or_die "The format is virtualhost-delete.sh virtualhost" $VIRTUAL_HOST
+param_or_die "Usage: virtualhost-delete.sh <virtualhost>" "$VIRTUAL_HOST"
 
-docker exec --user www-data hefesto-php-fpm-1 php /var/www/artisan delete:virtualhost $VIRTUAL_HOST
-docker exec hefesto-nginx-1 certbot delete --non-interactive --cert-name $VIRTUAL_HOST
+compose_exec php-fpm php /var/www/artisan delete:virtualhost "$VIRTUAL_HOST"
+compose_exec nginx certbot delete --non-interactive --cert-name "$VIRTUAL_HOST" 2>/dev/null || true
 
-echo $VIRTUAL_HOST' DELETED'
+echo "✓ '$VIRTUAL_HOST' deleted"
+echo "✅ All done"
