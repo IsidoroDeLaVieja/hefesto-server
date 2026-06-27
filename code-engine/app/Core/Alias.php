@@ -24,7 +24,7 @@ class Alias
         }
 
         [$object, $action, $arguments, $keys] = $this->$stateMethod($keyParts);
-        $value = call_user_func_array([$object, $action], $arguments);
+        $value = $object->$action(...$arguments);
 
         return $keys ? $this->recursiveValue($value, $keys) : $value;
     }

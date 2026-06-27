@@ -30,6 +30,7 @@ services:
         - DOCKER_TLS_CERTDIR=/certs
         - DOCKER_CERT_PATH=/certs/client
         - FAKETIME=${PHP_FPM_FAKETIME}
+      restart: unless-stopped
       networks:
         - backend
 
@@ -44,6 +45,7 @@ services:
         - ./php-worker/supervisord.d:/etc/supervisord.d
       extra_hosts:
         - "dockerhost:${DOCKER_HOST_IP}"
+      restart: unless-stopped
       networks:
         - backend
 
@@ -64,11 +66,12 @@ services:
         - "${NGINX_HOST_HTTPS_PORT}:443"
       depends_on:
         - php-fpm
+      restart: unless-stopped
       networks:
         - backend
 
     postgres:
-      build: ./postgres-pgrouting
+      build: ./postgres-postgis
       shm_size: '512m'
       volumes:
         - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
@@ -78,6 +81,7 @@ services:
         - POSTGRES_DB=${POSTGRES_DB}
         - POSTGRES_USER=${POSTGRES_USER}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      restart: unless-stopped
       healthcheck:
         test: ["CMD", "pg_isready", "-U", "postgres"]
         interval: 5s
@@ -92,6 +96,7 @@ services:
         - ${DATA_PATH_HOST}/redis:/data
       ports:
         - "${REDIS_PORT}:6379"
+      restart: unless-stopped
       healthcheck:
         test: ["CMD", "redis-cli", "ping"]
         interval: 5s

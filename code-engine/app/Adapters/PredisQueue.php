@@ -76,7 +76,7 @@ class PredisQueue implements Queue
             return null;
         }
 
-        return unserialize($engine);
+        return unserialize($engine, ['allowed_classes' => true]);
     }
 
     public function fail(string $id): void

@@ -38,7 +38,7 @@ class WorkerTest extends TestCase
 
         $this->queue->expects($this->exactly(10))
             ->method('success')
-            ->with($this->isType('string'), 'my-org', 'prod');
+            ->with(self::isString(), 'my-org', 'prod');
 
         $this->queue->expects($this->never())
             ->method('fail');
@@ -108,11 +108,11 @@ class WorkerTest extends TestCase
 
         $this->queue->expects($this->exactly(5))
             ->method('fail')
-            ->with($this->isType('string'));
+            ->with(self::isString());
 
         $this->queue->expects($this->exactly(5))
             ->method('success')
-            ->with($this->isType('string'), 'my-org', 'prod');
+            ->with(self::isString(), 'my-org', 'prod');
 
         try {
             $this->worker->loop();
@@ -169,7 +169,7 @@ class WorkerTest extends TestCase
     {
         $message = new Message('POST', '/test', [], '{}', [], [], $status);
 
-        $state = $this->createMock(State::class);
+        $state = $this->createStub(State::class);
         $state->method('id')->willReturn(uniqid());
 
         $memory = new ExecutionTimeMemory();
@@ -179,7 +179,7 @@ class WorkerTest extends TestCase
         $state->method('memory')->willReturn($memory);
         $state->method('message')->willReturn($message);
 
-        $engine = $this->createMock(Engine::class);
+        $engine = $this->createStub(Engine::class);
         $engine->method('state')->willReturn($state);
 
         return $engine;
@@ -211,7 +211,6 @@ class WorkerUnderTest extends Worker
     public function countJobs(): int
     {
         $ref = new \ReflectionProperty(Worker::class, 'countJobs');
-        $ref->setAccessible(true);
         return $ref->getValue($this);
     }
 

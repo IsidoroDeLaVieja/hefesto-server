@@ -32,9 +32,9 @@ class MainControllerTest extends TestCase
         parent::setUp();
 
         $this->pathInterpreter = $this->createMock(PathInterpreter::class);
-        $this->engineDispatcher = $this->createMock(EngineDispatcher::class);
-        $this->apiMemoryFactory = $this->createMock(ApiMemoryFactory::class);
-        $this->directiveFactory = $this->createMock(DirectiveFactory::class);
+        $this->engineDispatcher = $this->createStub(EngineDispatcher::class);
+        $this->apiMemoryFactory = $this->createStub(ApiMemoryFactory::class);
+        $this->directiveFactory = $this->createStub(DirectiveFactory::class);
 
         $this->controller = new MainController(
             $this->pathInterpreter,
@@ -63,9 +63,8 @@ class MainControllerTest extends TestCase
                 'PATH_PARAMS' => [],
             ]);
 
-        $mockDirective = $this->createMock(Directive::class);
+        $mockDirective = $this->createStub(Directive::class);
         $this->directiveFactory
-            ->expects($this->any())
             ->method('make')
             ->willReturn($mockDirective);
 
@@ -119,9 +118,8 @@ class MainControllerTest extends TestCase
                 'PATH_PARAMS' => [],
             ]);
 
-        $mockDirective = $this->createMock(Directive::class);
+        $mockDirective = $this->createStub(Directive::class);
         $this->directiveFactory
-            ->expects($this->any())
             ->method('make')
             ->willReturn($mockDirective);
 
@@ -152,9 +150,8 @@ class MainControllerTest extends TestCase
                 'PATH_PARAMS' => ['id' => '42'],
             ]);
 
-        $mockDirective = $this->createMock(Directive::class);
+        $mockDirective = $this->createStub(Directive::class);
         $this->directiveFactory
-            ->expects($this->any())
             ->method('make')
             ->willReturn($mockDirective);
 

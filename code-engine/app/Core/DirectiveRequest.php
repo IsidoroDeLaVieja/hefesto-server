@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-class DirectiveRequest
+readonly class DirectiveRequest
 {
     public function __construct(
         public readonly string $id,

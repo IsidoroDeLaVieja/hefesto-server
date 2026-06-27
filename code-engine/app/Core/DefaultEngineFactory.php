@@ -6,7 +6,7 @@ namespace App\Core;
 
 use SplDoublyLinkedList;
 
-class DefaultEngineFactory implements EngineFactory
+readonly class DefaultEngineFactory implements EngineFactory
 {
     public function __construct(
         private readonly DirectiveFactory $directiveFactory = new DefaultDirectiveFactory()

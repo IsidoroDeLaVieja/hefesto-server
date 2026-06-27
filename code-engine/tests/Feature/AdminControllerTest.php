@@ -28,16 +28,13 @@ class AdminControllerTest extends TestCase
         $memory = new \Tests\Fixture\InMemoryMemory();
         $this->apiStorage = new ApiStorage($memory);
 
-        $this->apiMemoryFactory = $this->createMock(ApiMemoryFactory::class);
-        $cachedFileMemory = $this->createMock(\App\Adapters\CachedFileMemory::class);
+        $cachedFileMemory = $this->createStub(\App\Adapters\CachedFileMemory::class);
+        $this->apiMemoryFactory = $this->createStub(ApiMemoryFactory::class);
         $this->apiMemoryFactory
             ->method('make')
             ->willReturn($cachedFileMemory);
 
-        $this->deploy = $this->getMockBuilder(Deploy::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['instanceExecute', 'instanceCleanReleases'])
-            ->getMock();
+        $this->deploy = $this->createStub(Deploy::class);
 
         $this->controller = new AdminController(
             $this->apiStorage,
@@ -54,17 +51,28 @@ class AdminControllerTest extends TestCase
 
     public function testPostApiHappyPath(): void
     {
-        $this->deploy
+        $deploy = $this->getMockBuilder(Deploy::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['instanceExecute', 'instanceCleanReleases'])
+            ->getMock();
+
+        $deploy
             ->expects($this->once())
             ->method('instanceExecute')
             ->willReturn(['release987', 'api-key-test']);
 
-        $this->deploy
+        $deploy
             ->expects($this->once())
             ->method('instanceCleanReleases');
 
+        $controller = new AdminController(
+            $this->apiStorage,
+            $this->apiMemoryFactory,
+            $deploy
+        );
+
         $request = $this->buildRequestWithFile();
-        $response = $this->controller->postApi($request);
+        $response = $controller->postApi($request);
 
         $this->assertEquals(200, $response->getStatusCode());
         $payload = $response->getData(true);
@@ -79,13 +87,24 @@ class AdminControllerTest extends TestCase
 
     public function testPostApiThrowsExceptionWithKnownCode(): void
     {
-        $this->deploy
+        $deploy = $this->getMockBuilder(Deploy::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['instanceExecute'])
+            ->getMock();
+
+        $deploy
             ->expects($this->once())
             ->method('instanceExecute')
             ->willThrowException(new Exception('deploy failed', 400));
 
+        $controller = new AdminController(
+            $this->apiStorage,
+            $this->apiMemoryFactory,
+            $deploy
+        );
+
         $request = $this->buildRequestWithFile();
-        $response = $this->controller->postApi($request);
+        $response = $controller->postApi($request);
 
         $this->assertEquals(400, $response->getStatusCode());
         $this->assertSame('deploy failed', $response->getContent());
@@ -93,13 +112,24 @@ class AdminControllerTest extends TestCase
 
     public function testPostApiThrowsExceptionWithUnknownCodeFallsBackTo500(): void
     {
-        $this->deploy
+        $deploy = $this->getMockBuilder(Deploy::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['instanceExecute'])
+            ->getMock();
+
+        $deploy
             ->expects($this->once())
             ->method('instanceExecute')
             ->willThrowException(new Exception('server error', 0));
 
+        $controller = new AdminController(
+            $this->apiStorage,
+            $this->apiMemoryFactory,
+            $deploy
+        );
+
         $request = $this->buildRequestWithFile();
-        $response = $this->controller->postApi($request);
+        $response = $controller->postApi($request);
 
         $this->assertEquals(500, $response->getStatusCode());
         $this->assertSame('server error', $response->getContent());

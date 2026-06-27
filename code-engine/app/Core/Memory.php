@@ -6,7 +6,7 @@ namespace App\Core;
 
 interface Memory {
 
-    public function get(string $key);
+    public function get(string $key): mixed;
 
     public function set(string $key,$value) : void;
 

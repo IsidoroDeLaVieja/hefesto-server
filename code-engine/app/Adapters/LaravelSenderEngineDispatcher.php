@@ -8,7 +8,7 @@ use App\Core\Engine;
 use App\Core\Queue;
 use App\Core\SenderEngineDispatcher;
 
-class LaravelSenderEngineDispatcher implements SenderEngineDispatcher
+readonly class LaravelSenderEngineDispatcher implements SenderEngineDispatcher
 {
     public function __construct(
         private readonly Queue $queue,

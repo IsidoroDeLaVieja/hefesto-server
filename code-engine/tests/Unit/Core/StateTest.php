@@ -196,7 +196,7 @@ class StateTest extends TestCase
         $config = self::DEFAULT_CONFIG;
         $config['apiMemory'] = $apiMemory;
 
-        $repository = $this->createMock(MapRepositoryInterface::class);
+        $repository = $this->createStub(MapRepositoryInterface::class);
         $repository->method('load')->willReturn(['key' => 'val']);
 
         $state = $this->createState($config, null, null, null, $repository);
@@ -214,7 +214,7 @@ class StateTest extends TestCase
         $config = self::DEFAULT_CONFIG;
         $config['apiMemory'] = null;
 
-        $repository = $this->createMock(MapRepositoryInterface::class);
+        $repository = $this->createStub(MapRepositoryInterface::class);
         $repository->method('load')->willReturn(['x' => 'y']);
 
         $state = $this->createState($config, null, null, null, $repository);
@@ -316,7 +316,7 @@ class StateTest extends TestCase
         $message ??= new Message('POST', '/test', [], '{}', [], [], 200);
         $groups ??= new Groups();
         $memory ??= new ExecutionTimeMemory();
-        $mapRepository ??= $this->createMock(MapRepositoryInterface::class);
+        $mapRepository ??= $this->createStub(MapRepositoryInterface::class);
 
         $defaults = self::DEFAULT_CONFIG;
         $config = array_merge($defaults, $config);

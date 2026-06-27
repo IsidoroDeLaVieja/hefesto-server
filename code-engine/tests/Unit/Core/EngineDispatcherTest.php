@@ -27,9 +27,9 @@ class EngineDispatcherTest extends TestCase
         $oldDirectives->push($directive3);
         $oldDirectives->push($directive4);
 
-        $state = $this->createMock(State::class);
+        $state = $this->createStub(State::class);
 
-        $engine = $this->createMock(Engine::class);
+        $engine = $this->createStub(Engine::class);
         $engine->method('directives')->willReturn($oldDirectives);
         $engine->method('state')->willReturn($state);
 
@@ -37,7 +37,7 @@ class EngineDispatcherTest extends TestCase
         $expectedFilteredDirectives->push($directive3);  // order 3 > oldOrder=2
         $expectedFilteredDirectives->push($directive4);  // order 4 > oldOrder=2
 
-        $engineToDispatch = $this->createMock(Engine::class);
+        $engineToDispatch = $this->createStub(Engine::class);
 
         $engineFactory = $this->createMock(EngineFactory::class);
         $engineFactory
@@ -82,9 +82,9 @@ class EngineDispatcherTest extends TestCase
         $oldDirectives->push($directive1);
         $oldDirectives->push($directive2);
 
-        $state = $this->createMock(State::class);
+        $state = $this->createStub(State::class);
 
-        $engine = $this->createMock(Engine::class);
+        $engine = $this->createStub(Engine::class);
         $engine->method('directives')->willReturn($oldDirectives);
         $engine->method('state')->willReturn($state);
 
@@ -92,7 +92,7 @@ class EngineDispatcherTest extends TestCase
         $expectedAllDirectives->push($directive1); // order 1 > 0
         $expectedAllDirectives->push($directive2); // order 2 > 0
 
-        $engineToDispatch = $this->createMock(Engine::class);
+        $engineToDispatch = $this->createStub(Engine::class);
 
         $engineFactory = $this->createMock(EngineFactory::class);
         $engineFactory
@@ -137,15 +137,15 @@ class EngineDispatcherTest extends TestCase
         $oldDirectives->push($directive1);
         $oldDirectives->push($directive2);
 
-        $state = $this->createMock(State::class);
+        $state = $this->createStub(State::class);
 
-        $engine = $this->createMock(Engine::class);
+        $engine = $this->createStub(Engine::class);
         $engine->method('directives')->willReturn($oldDirectives);
         $engine->method('state')->willReturn($state);
 
         $expectedEmptyDirectives = new SplDoublyLinkedList();
 
-        $engineToDispatch = $this->createMock(Engine::class);
+        $engineToDispatch = $this->createStub(Engine::class);
 
         $engineFactory = $this->createMock(EngineFactory::class);
         $engineFactory

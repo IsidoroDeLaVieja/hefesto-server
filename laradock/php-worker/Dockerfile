@@ -1,4 +1,4 @@
-FROM php:8.3-alpine
+FROM php:8.5-alpine
 
 RUN apk update && apk upgrade
 
@@ -16,7 +16,7 @@ RUN apk --update add wget \
   cyrus-sasl-dev \
   libgsasl-dev \
   oniguruma-dev \
-  libressl \
+  openssl \
   supervisor
 
 RUN docker-php-ext-install mysqli mbstring pdo pdo_mysql pdo_pgsql xml pcntl
@@ -62,14 +62,6 @@ ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c",  "/etc/supervisord.conf"]
 # If you need to modify this image, feel free to do it right here.
 #
     # -- Your awesome modifications go here -- #
-
-#
-#--------------------------------------------------------------------------
-# Check PHP version
-#--------------------------------------------------------------------------
-#
-
-RUN php -v | head -n 1 | grep -q "PHP ${PHP_VERSION}."
 
 #
 #--------------------------------------------------------------------------

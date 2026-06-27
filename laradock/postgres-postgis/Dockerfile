@@ -1,6 +1,4 @@
-FROM mdillon/postgis:latest
-
-LABEL maintainer="Mahmoud Zalt <mahmoud@zalt.me>"
+FROM postgis/postgis:17-3.5
 
 CMD ["postgres"]
 

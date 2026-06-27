@@ -80,7 +80,7 @@ class Deploy
         $path = $storagePath . $organization . '/' . $environment . '/' . $key . '/';
 
         if (!file_exists($path)) {
-            mkdir($path, 0755, true);
+            mkdir($path, 0o755, true);
         }
     }
 

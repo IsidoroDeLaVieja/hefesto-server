@@ -27,7 +27,7 @@ COPY logrotate/nginx /etc/logrotate.d/
 RUN echo "upstream php-upstream { server ${PHP_UPSTREAM_CONTAINER}:${PHP_UPSTREAM_PORT}; }" > /etc/nginx/conf.d/upstream.conf \
     && rm /etc/nginx/conf.d/default.conf
 
-# Certbot
+# Certbot for SSL certificates
 RUN apk add build-base musl-dev libffi-dev gcc openssl-dev cargo certbot certbot-nginx
 RUN mkdir /etc/letsencrypt
 

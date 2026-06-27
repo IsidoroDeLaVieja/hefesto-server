@@ -135,9 +135,11 @@ class Message
 
     public function getBodyAsArray(): ?array
     {
-        $data = json_decode($this->body, true);
+        if (!json_validate($this->body)) {
+            return null;
+        }
 
-        return json_last_error() === JSON_ERROR_NONE ? $data : null;
+        return json_decode($this->body, true);
     }
 
     public function setBodyAsArray(array $body): void

@@ -300,7 +300,7 @@ class PredisQueueTest extends TestCase
         return new Engine(
             $state,
             $directives,
-            $this->createMock(EngineDispatcher::class),
+            $this->createStub(EngineDispatcher::class),
             new DefaultDirectiveFactory()
         );
     }

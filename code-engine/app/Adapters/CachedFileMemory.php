@@ -17,13 +17,13 @@ class CachedFileMemory implements Memory {
         $this->prefix = $key;
     }
 
-    public function get(string $key)
+    public function get(string $key): mixed
     {
         $fullKey = $this->prefix.'/'.$key;
 
         $cached = Redis::get($fullKey);
         if ($cached !== false && $cached !== null) {
-            return unserialize($cached);
+            return unserialize($cached, ['allowed_classes' => true]);
         }
 
         return $this->loadFromStorage($fullKey);
@@ -57,7 +57,7 @@ class CachedFileMemory implements Memory {
 
         if ($value !== null) {
             Redis::set($key, $value);
-            return unserialize($value);
+            return unserialize($value, ['allowed_classes' => true]);
         }
 
         return null;

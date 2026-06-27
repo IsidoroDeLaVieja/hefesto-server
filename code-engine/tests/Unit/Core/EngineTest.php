@@ -19,38 +19,31 @@ use SplDoublyLinkedList;
 class EngineTest extends TestCase 
 {
     private $state;
-    private $engineDispatcherMock;
-    private $directiveFactoryMock;
+    private $engineDispatcherStub;
+    private $directiveFactoryStub;
     
     protected function setUp() : void
     {
         $this->state = StateFixture::get([]);
         $this->state->enableDirectiveDebug();
-        $this->engineDispatcherMock = $this->getMockBuilder(EngineDispatcher::class)
-                ->disableOriginalConstructor()->onlyMethods([
-                    'send',
-                ])->getMock();
-        $this->directiveFactoryMock = $this->getMockBuilder(DirectiveFactory::class)
-                ->disableOriginalConstructor()->onlyMethods([
-                    'make',
-                ])->getMock();
+        $this->engineDispatcherStub = $this->createStub(EngineDispatcher::class);
+        $this->directiveFactoryStub = $this->createStub(DirectiveFactory::class);
     }
 
-    private function buildEngine(SplDoublyLinkedList $directives): Engine
+    private function buildEngine(SplDoublyLinkedList $directives, ?object $dispatcher = null): Engine
     {
         return new Engine(
             $this->state,
             $directives,
-            $this->engineDispatcherMock,
-            $this->directiveFactoryMock
+            $dispatcher ?? $this->engineDispatcherStub,
+            $this->directiveFactoryStub
         );
     }
 
     private function expectMakeDirective(): void
     {
-        $this->directiveFactoryMock->expects($this->any())
+        $this->directiveFactoryStub
             ->method('make')
-            ->with(DirectiveFixture::class)
             ->willReturnCallback(function ($name) {
                 return new $name();
             });
@@ -59,6 +52,12 @@ class EngineTest extends TestCase
     public function testShouldDoLoopOverDirectives() : void 
     {
         $this->expectMakeDirective();
+
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
+        $dispatcher->expects($this->never())->method('send');
 
         $directives = DirectivesFixture::get([[
             'key-header' => 'geom',
@@ -118,9 +117,8 @@ class EngineTest extends TestCase
                     'body' => 'rectangulo'
                 ],
         ];
-        $this->engineDispatcherMock->expects($this->never())->method('send');
 
-        $engine = $this->buildEngine($directives);
+        $engine = $this->buildEngine($directives, $dispatcher);
         
         $message = $engine->execute();
         
@@ -137,6 +135,12 @@ class EngineTest extends TestCase
     public function testShouldNotExecuteDirectivesWhenThereIsError() : void 
     {
         $this->expectMakeDirective();
+
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
+        $dispatcher->expects($this->never())->method('send');
 
         $directives = DirectivesFixture::get([[
             'key-header' => 'x-header-error',
@@ -205,9 +209,8 @@ class EngineTest extends TestCase
                 'body' => ''
             ],
         ];
-        $this->engineDispatcherMock->expects($this->never())->method('send');
 
-        $engine = $this->buildEngine($directives);
+        $engine = $this->buildEngine($directives, $dispatcher);
         
         $message = $engine->execute();
         
@@ -224,6 +227,11 @@ class EngineTest extends TestCase
     public function testShouldDispatchItself() : void 
     {
         $this->expectMakeDirective();
+
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
 
         $directives = DirectivesFixture::get([[
             'key-header' => 'geom',
@@ -303,9 +311,9 @@ class EngineTest extends TestCase
             ],
         ];
 
-        $engine = $this->buildEngine($directives);
+        $engine = $this->buildEngine($directives, $dispatcher);
 
-        $this->engineDispatcherMock->expects($this->once())
+        $dispatcher->expects($this->once())
             ->method('send')
             ->with($engine,2,0);
         
@@ -366,7 +374,7 @@ class EngineTest extends TestCase
     public function testShouldExecuteWithEmptyDirectives() : void 
     {
         $directives = new SplDoublyLinkedList();
-        $this->directiveFactoryMock->expects($this->never())->method('make');
+        $this->directiveFactoryStub->method('make');
 
         $engine = $this->buildEngine($directives);
         $message = $engine->execute();
@@ -377,10 +385,15 @@ class EngineTest extends TestCase
     public function testShouldExecuteWithoutLogging() : void 
     {
         $directives = new SplDoublyLinkedList();
-        $this->directiveFactoryMock->expects($this->never())->method('make');
-        $this->engineDispatcherMock->expects($this->never())->method('send');
+        $this->directiveFactoryStub->method('make');
 
-        $engine = $this->buildEngine($directives);
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
+        $dispatcher->expects($this->never())->method('send');
+
+        $engine = $this->buildEngine($directives, $dispatcher);
         $message = $engine->execute(Groups::NORMAL_FLOW, false);
 
         self::assertSame([], $this->state->getDebug());
@@ -390,6 +403,12 @@ class EngineTest extends TestCase
     {
         $this->expectMakeDirective();
 
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
+        $dispatcher->expects($this->never())->method('send');
+
         $directives = DirectivesFixture::get([[
             'key-header' => 'geom',
             'value-header' => 'cuadrado'
@@ -397,9 +416,7 @@ class EngineTest extends TestCase
             'status' => 200,
         ]]);
 
-        $this->engineDispatcherMock->expects($this->never())->method('send');
-
-        $engine = $this->buildEngine($directives);
+        $engine = $this->buildEngine($directives, $dispatcher);
         $message = $engine->execute();
 
         self::assertSame(200, $message->getStatus());
@@ -409,6 +426,12 @@ class EngineTest extends TestCase
     {
         $this->expectMakeDirective();
 
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
+        $dispatcher->expects($this->once())->method('send');
+
         $directives = DirectivesFixture::get([[
             'key-header' => 'queue-flow',
             'value-header' => 'ok'
@@ -416,9 +439,7 @@ class EngineTest extends TestCase
             'status' => 200,
         ]]);
 
-        $this->engineDispatcherMock->expects($this->once())->method('send');
-
-        $engine = $this->buildEngine($directives);
+        $engine = $this->buildEngine($directives, $dispatcher);
         $engine->execute();
         $engine->execute();
 
@@ -449,13 +470,17 @@ class EngineTest extends TestCase
     {
         $this->expectMakeDirective();
 
+        $dispatcher = $this->getMockBuilder(EngineDispatcher::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['send'])
+            ->getMock();
+        $dispatcher->expects($this->never())->method('send');
+
         $directives = DirectivesFixture::get([[
             'status' => 200,
         ]]);
 
-        $this->engineDispatcherMock->expects($this->never())->method('send');
-
-        $engine = $this->buildEngine($directives);
+        $engine = $this->buildEngine($directives, $dispatcher);
         $engine->execute();
 
         $message = $engine->executeAfter();
@@ -570,7 +595,9 @@ class EngineTest extends TestCase
                 $state->message()->setStatus(418);
             });
 
-        $this->directiveFactoryMock->expects($this->once())
+        $directiveFactoryMock = $this->createMock(DirectiveFactory::class);
+        $directiveFactoryMock
+            ->expects($this->once())
             ->method('make')
             ->with(DirectiveFixture::class)
             ->willReturn($customDirective);
@@ -579,7 +606,12 @@ class EngineTest extends TestCase
             'status' => 200,
         ]]);
 
-        $engine = $this->buildEngine($directives);
+        $engine = new Engine(
+            $this->state,
+            $directives,
+            $this->engineDispatcherStub,
+            $directiveFactoryMock
+        );
         $message = $engine->execute();
 
         self::assertSame(418, $message->getStatus());
